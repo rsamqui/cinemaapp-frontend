@@ -1,0 +1,21 @@
+# Core Libraries
+react
+react-dom
+react-router-dom
+
+# UI
+@mui/material
+@emotion/react
+@emotion/styled
+@mui/icons-material
+tailwindcss
+postcss
+autoprefixer
+
+# HTTP & Auth
+axios
+jwt-decode
+
+# Dev Tools
+vite
+@vitejs/plugin-react
