@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import {
   Box,
   Button,
@@ -24,6 +26,10 @@ import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "../theme";
 
 function LoginCard() {
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +46,7 @@ function LoginCard() {
     return re.test(emailValue);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setEmailError("");
     setPasswordError("");
@@ -60,9 +66,23 @@ function LoginCard() {
       isValid = false;
     }
     if (isValid) {
-      console.log("Login attempt with:", { email, password, rememberMe });
-      // Call your authentication API
+      console.log("Login attempt with:", { email, password});
+      try {
+        await login({ email, password }); // Use the login method from AuthContext
+        console.log("Login successful");
+        navigate('/'); // Redirect to homepage or dashboard after successful login
+      } catch (error) {
+        // error should be an object with a message property from authService
+        const errorMessage = error.message || "Login failed. Please check your credentials.";
+        // Display error to the user (e.g., set a general login error state)
+        // For now, let's assume backend returns specific field errors or a general message
+        // If backend returns specific field errors, you can update setEmailError or setPasswordError
+        // Example: if error.field === 'email', setEmailError(error.message)
+        setPasswordError(errorMessage); // Or a general error display
+        console.error("Login failed in component:", error);
+      }
     }
+    
   };
 
   return (

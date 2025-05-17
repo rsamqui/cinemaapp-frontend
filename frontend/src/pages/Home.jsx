@@ -2,15 +2,16 @@ import {
   Box,
   Button,
   Card,
-  CardActionArea,
+  // CardActionArea, // We will remove this where it causes issues with nested buttons
   CardContent,
   CardMedia,
   Container,
   Divider,
   Grid,
   IconButton,
-  Link, 
+  Link,
   Typography,
+  CardActions, // Import CardActions for better button placement
 } from "@mui/material";
 import {
   PlayArrow as PlayArrowIcon,
@@ -20,6 +21,7 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
 } from "@mui/icons-material";
+import { Link as RouterLink } from 'react-router-dom'; // Assuming you use React Router for navigation
 
 // Sample movie data (keep this or fetch it as needed)
 const featuredMovie = {
@@ -48,6 +50,22 @@ const comingSoonMovies = [
 ];
 
 export default function Home() {
+  // Placeholder handlers - implement your navigation/booking logic
+  const handleWatchTrailer = (movieId) => {
+    console.log("Watch trailer for movie ID:", movieId);
+    // navigate(`/movies/${movieId}/trailer`);
+  };
+
+  const handleBookTickets = (movieId) => {
+    console.log("Book tickets for movie ID:", movieId);
+    // navigate(`/booking/${movieId}`);
+  };
+  
+  const handleRemindMe = (movieId) => {
+    console.log("Set reminder for movie ID:", movieId);
+    // Implement reminder logic
+  };
+
 
   return (
     <>
@@ -63,10 +81,10 @@ export default function Home() {
           backgroundPosition: "center",
         }}
       >
-        <Container maxWidth={false} /* or your previous setting */ >
+        <Container maxWidth={false} >
           <Grid container spacing={2}>
             <Grid item xs={12} md={8} lg={6}>
-              <Box sx={{ mt: { xs: 8, md: 0 } /* Adjust mt if needed due to fixed AppBar */ }}>
+              <Box sx={{ mt: { xs: 8, md: 0 } }}>
                 <Typography
                   variant="overline"
                   sx={{ color: "secondary.main", fontWeight: 600 }}
@@ -122,6 +140,7 @@ export default function Home() {
                     size="large"
                     startIcon={<PlayArrowIcon />}
                     sx={{ px: 4, py: 1.5 }}
+                    onClick={() => handleWatchTrailer(featuredMovie.id)}
                   >
                     Watch Trailer
                   </Button>
@@ -130,6 +149,7 @@ export default function Home() {
                     color="secondary"
                     size="large"
                     sx={{ px: 4, py: 1.5 }}
+                    onClick={() => handleBookTickets(featuredMovie.id)}
                   >
                     Book Tickets
                   </Button>
@@ -141,7 +161,7 @@ export default function Home() {
       </Box>
 
       {/* Now Showing Section */}
-      <Container maxWidth={false} /* or your previous setting */ sx={{ py: 6 }}>
+      <Container maxWidth={false} sx={{ py: 6 }}>
         <Box
           sx={{
             display: "flex",
@@ -153,7 +173,7 @@ export default function Home() {
           <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
             Now Showing
           </Typography>
-          <Button color="secondary" endIcon={<PlayArrowIcon />}>
+          <Button component={RouterLink} to="/movies/now-showing" color="secondary" endIcon={<PlayArrowIcon />}>
             View All
           </Button>
         </Box>
@@ -165,19 +185,22 @@ export default function Home() {
                   height: "100%",
                   display: "flex",
                   flexDirection: "column",
+                  justifyContent: 'space-between', // Pushes CardActions to the bottom
                   bgcolor: "background.paper",
                   transition: "transform 0.2s",
                   "&:hover": { transform: "scale(1.03)" },
                 }}
               >
-                <CardActionArea>
+                {/* Option: Make CardMedia and CardContent part of a CardActionArea if they should navigate */}
+                {/* For this fix, we assume the button is the primary action, not the whole card area */}
+                <Box component={RouterLink} to={`/movies/${movie.id}`} sx={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <CardMedia
                     component="img"
-                    height="350"
+                    height="350" // Adjust as needed, or use sx aspect-ratio
                     image={movie.image}
                     alt={movie.title}
                   />
-                  <CardContent>
+                  <CardContent sx={{ flexGrow: 1 }}> {/* Allows content to take space */}
                     <Box
                       sx={{
                         display: "flex",
@@ -186,19 +209,30 @@ export default function Home() {
                         mb: 1,
                       }}
                     >
-                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                      <Typography gutterBottom variant="h6" component="div" noWrap sx={{fontSize: '1rem'}}> {/* Adjusted font size */}
                         {movie.title}
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}> {/* Added margin for spacing */}
                         <StarIcon sx={{ color: "secondary.main", mr: 0.5 }} fontSize="small"/>
                         <Typography variant="body2">{movie.rating}</Typography>
                       </Box>
                     </Box>
-                    <Button variant="contained" color="primary" fullWidth size="small">
-                      Book Now
-                    </Button>
                   </CardContent>
-                </CardActionArea>
+                </Box>
+                <CardActions sx={{ justifyContent: 'center', p: 2 }}> {/* Added CardActions */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    size="small"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent link navigation if button is somehow part of it
+                        handleBookTickets(movie.id);
+                    }}
+                  >
+                    Book Now
+                  </Button>
+                </CardActions>
               </Card>
             </Grid>
           ))}
@@ -207,7 +241,7 @@ export default function Home() {
 
       {/* Coming Soon Section */}
       <Box sx={{ bgcolor: "background.paper", py: 8 }}>
-        <Container maxWidth={false} /* or your previous setting */>
+        <Container maxWidth={false}>
           <Box
             sx={{
               display: "flex",
@@ -219,7 +253,7 @@ export default function Home() {
             <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
               Coming Soon
             </Typography>
-            <Button color="secondary" endIcon={<CalendarIcon />}>
+            <Button component={RouterLink} to="/movies/coming-soon" color="secondary" endIcon={<CalendarIcon />}>
               View Schedule
             </Button>
           </Box>
@@ -231,20 +265,21 @@ export default function Home() {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    bgcolor: "#252525",
+                    justifyContent: 'space-between', // Pushes CardActions to the bottom
+                    bgcolor: "#252525", // Or theme.palette.background.paper variant
                     transition: "transform 0.2s",
                     "&:hover": { transform: "scale(1.03)" },
                   }}
                 >
-                  <CardActionArea>
+                  <Box component={RouterLink} to={`/movies/${movie.id}`} sx={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                     <CardMedia
                       component="img"
                       height="350"
                       image={movie.image}
                       alt={movie.title}
                     />
-                    <CardContent>
-                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography gutterBottom variant="h6" component="div" noWrap sx={{fontSize: '1rem'}}>
                         {movie.title}
                       </Typography>
                       <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -253,11 +288,22 @@ export default function Home() {
                           {movie.releaseDate}
                         </Typography>
                       </Box>
-                      <Button variant="outlined" color="secondary" fullWidth size="small">
-                        Remind Me
-                      </Button>
                     </CardContent>
-                  </CardActionArea>
+                  </Box>
+                  <CardActions sx={{ justifyContent: 'center', p: 2 }}> {/* Added CardActions */}
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      fullWidth
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemindMe(movie.id);
+                      }}
+                    >
+                      Remind Me
+                    </Button>
+                  </CardActions>
                 </Card>
               </Grid>
             ))}
@@ -274,11 +320,10 @@ export default function Home() {
           borderTop: "1px solid #333",
         }}
       >
-        <Container maxWidth={false} /* or your previous "lg" / false setting */ >
+        <Container maxWidth={false} >
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                {/* <MovieIcon sx={{ color: "primary.main", fontSize: 40, mr: 1 }} /> Re-add if you want logo here too */}
                 <Typography variant="h5" component="div" sx={{ fontWeight: 700, color: "white" }}>
                   CinePass
                 </Typography>
@@ -288,7 +333,7 @@ export default function Home() {
                 timeless classics. Experience cinema like never before.
               </Typography>
               <Box sx={{ display: "flex", gap: 2 }}>
-                 {/* SVG Icons for social media */}
+                {/* SVG Icons for social media */}
                 <IconButton size="small" sx={{ color: "white" }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg></IconButton>
                 <IconButton size="small" sx={{ color: "white" }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" /></svg></IconButton>
                 <IconButton size="small" sx={{ color: "white" }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg></IconButton>
