@@ -68,17 +68,12 @@ function LoginCard() {
     if (isValid) {
       console.log("Login attempt with:", { email, password});
       try {
-        await login({ email, password }); // Use the login method from AuthContext
+        await login({ email, password });
         console.log("Login successful");
-        navigate('/'); // Redirect to homepage or dashboard after successful login
+        navigate('/');
       } catch (error) {
-        // error should be an object with a message property from authService
         const errorMessage = error.message || "Login failed. Please check your credentials.";
-        // Display error to the user (e.g., set a general login error state)
-        // For now, let's assume backend returns specific field errors or a general message
-        // If backend returns specific field errors, you can update setEmailError or setPasswordError
-        // Example: if error.field === 'email', setEmailError(error.message)
-        setPasswordError(errorMessage); // Or a general error display
+        setPasswordError(errorMessage);
         console.error("Login failed in component:", error);
       }
     }
@@ -213,7 +208,7 @@ function LoginCard() {
               <Box sx={{ textAlign: "center", mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Don't have an account?{" "}
-                  <Link href="#" variant="body2" sx={{ color: "secondary.main", fontWeight: "medium", "&:hover": { textDecoration: "underline" } }}>
+                  <Link href="/register" variant="body2" sx={{ color: "secondary.main", fontWeight: "medium", "&:hover": { textDecoration: "underline" } }}>
                     Sign up now
                   </Link>
                 </Typography>

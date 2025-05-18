@@ -1,5 +1,7 @@
+// src/components/RegisterCard.jsx
 import { useState } from "react";
-
+import { useNavigate, Link as RouterLink } from "react-router-dom"; // Import RouterLink for internal navigation
+import { useAuth } from "../contexts/AuthContext";
 import {
   Box,
   Button,
@@ -9,75 +11,124 @@ import {
   Paper,
   InputAdornment,
   IconButton,
-  Link,
+  Link as MuiLink, // Renamed to avoid conflict
   Divider,
-  Checkbox,
-  FormControlLabel,
-} from "@mui/material"
+  // Checkbox, // Not typically needed for registration
+  // FormControlLabel, // Not typically needed for registration
+} from "@mui/material";
 import {
   Email as EmailIcon,
   Lock as LockIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Movie as MovieIcon,
-} from "@mui/icons-material"
-import { ThemeProvider } from "@mui/material/styles"
-import { darkTheme } from "../theme";
+  Person as PersonIcon, // Icon for Name
+} from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
+import { darkTheme } from "../theme"; // Assuming this path is correct
 
-function LoginCard() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [emailError, setEmailError] = useState("")
-  const [passwordError, setPasswordError] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
+function RegisterCard() {
+  const { register } = useAuth(); // Use the register function from AuthContext
+  const navigate = useNavigate();
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword)
-  }
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return re.test(email)
-  }
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState(""); // For general API errors
 
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+
+  const validateEmail = (emailValue) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(emailValue);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     // Reset errors
-    setEmailError("")
-    setPasswordError("")
+    setNameError("");
+    setEmailError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
+    setGeneralError("");
 
-    // Validate email
-    if (!email) {
-      setEmailError("Email is required")
+    let isValid = true;
+
+    if (!name.trim()) {
+      setNameError("Name is required");
+      isValid = false;
+    }
+
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      isValid = false;
     } else if (!validateEmail(email)) {
-      setEmailError("Please enter a valid email address")
+      setEmailError("Please enter a valid email address");
+      isValid = false;
     }
 
-    // Validate password
     if (!password) {
-      setPasswordError("Password is required")
+      setPasswordError("Password is required");
+      isValid = false;
     } else if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters")
+      setPasswordError("Password must be at least 6 characters");
+      isValid = false;
     }
 
-    // If validation passes
-    if (email && validateEmail(email) && password && password.length >= 6) {
-      console.log("Login attempt with:", { email, password, rememberMe })
-      // Call your authentication API
+    if (!confirmPassword) {
+      setConfirmPasswordError("Please confirm your password");
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      isValid = false;
     }
-  }
+
+    if (isValid) {
+      console.log("Registration attempt with:", { name, email, password });
+      try {
+        // The 'role' will be set by the backend.
+        // authService.register in AuthContext handles the actual API call.
+        await register({ name, email, password });
+        console.log("Registration successful");
+        // Navigate to login page after successful registration
+        // Optionally, you can show a success message first
+        navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
+      } catch (error) {
+        console.error("Registration failed in component:", error);
+        const errorMessage = error.message || error.error || "Registration failed. Please try again.";
+        // Check if the error object has specific field errors (depends on your backend response)
+        if (error.errors) { // Example: if backend returns { errors: { email: 'taken', name: 'too short' } }
+          error.errors.forEach(err => {
+            if (err.field === 'email') setEmailError(err.message);
+            if (err.field === 'name') setNameError(err.message);
+            // Add more specific field errors if your backend provides them
+          });
+        } else {
+          setGeneralError(errorMessage); // Display general error
+        }
+      }
+    }
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <Container component="main" maxWidth="xs">
+      <Container component="main" maxWidth="sm"> {/* Adjusted maxWidth for more fields */}
         <Paper
           elevation={6}
           sx={{
-            p: 4,
+            p: { xs: 2, sm: 3, md: 4 },
             borderRadius: 2,
-            background: "linear-gradient(to bottom, #1f1f1f, #141414)",
+            background: darkTheme.palette.background.paper,
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
           }}
         >
@@ -91,15 +142,43 @@ function LoginCard() {
             <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
               <MovieIcon sx={{ color: "primary.main", fontSize: 40, mr: 1 }} />
               <Typography component="h1" variant="h4" sx={{ fontWeight: 700 }}>
-                CinePass
+                CinePlex
               </Typography>
             </Box>
 
-            <Typography component="h2" variant="h6" sx={{ mb: 3 }}>
-              Sign in to your account
+            <Typography component="h2" variant="h6" sx={{ mb: 3, color: "text.secondary" }}>
+              Create your CinePlex Account
             </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
+            {generalError && (
+              <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+                {generalError}
+              </Typography>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }} noValidate>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="name"
+                label="Full Name"
+                name="name"
+                autoComplete="name"
+                autoFocus // Autofocus on the first field
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                error={!!nameError}
+                helperText={nameError}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
               <TextField
                 margin="normal"
                 required
@@ -108,7 +187,6 @@ function LoginCard() {
                 label="Email Address"
                 name="email"
                 autoComplete="email"
-                autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 error={!!emailError}
@@ -130,7 +208,7 @@ function LoginCard() {
                 label="Password"
                 type={showPassword ? "text" : "password"}
                 id="password"
-                autoComplete="current-password"
+                autoComplete="new-password" // Use "new-password" for registration
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={!!passwordError}
@@ -143,7 +221,11 @@ function LoginCard() {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                      >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
                     </InputAdornment>
@@ -151,22 +233,40 @@ function LoginCard() {
                 }}
               />
 
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      value="remember"
-                      color="primary"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                  }
-                  label="Remember me"
-                />
-                <Link href="#" variant="body2" sx={{ color: "secondary.main" }}>
-                  Forgot password?
-                </Link>
-              </Box>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="confirmPassword"
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={!!confirmPasswordError}
+                helperText={confirmPasswordError}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={handleClickShowConfirmPassword}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              {/* Removed "Remember me" and "Forgot password?" for registration form */}
 
               <Button
                 type="submit"
@@ -174,16 +274,14 @@ function LoginCard() {
                 variant="contained"
                 color="primary"
                 sx={{
-                  mt: 2,
+                  mt: 3, // Adjusted margin
                   mb: 3,
                   py: 1.5,
                   fontSize: "1rem",
-                  "&:hover": {
-                    backgroundColor: "#f40612",
-                  },
+                  fontWeight: 700,
                 }}
               >
-                Sign In
+                Sign Up
               </Button>
 
               <Divider sx={{ my: 2 }}>
@@ -193,25 +291,25 @@ function LoginCard() {
               </Divider>
 
               <Box sx={{ textAlign: "center", mt: 2 }}>
-                <Typography variant="body2">
-                  Don't have an account?{" "}
-                  <Link href="#" variant="body2" sx={{ color: "secondary.main" }}>
-                    Sign up now
-                  </Link>
+                <Typography variant="body2" color="text.secondary">
+                  Already have an account?{" "}
+                  <MuiLink component={RouterLink} to="/login" variant="body2" sx={{ color: "secondary.main", fontWeight: "medium", "&:hover": { textDecoration: "underline" } }}>
+                    Sign In
+                  </MuiLink>
                 </Typography>
               </Box>
             </Box>
           </Box>
         </Paper>
 
-        <Box sx={{ mt: 3, textAlign: "center" }}>
+        <Box sx={{ mt: 4, textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary">
-            &copy; {new Date().getFullYear()} CinePass. All rights reserved.
+            &copy; {new Date().getFullYear()} CinePlex. All rights reserved.
           </Typography>
         </Box>
       </Container>
     </ThemeProvider>
-  )
+  );
 }
 
-export default LoginCard;
+export default RegisterCard;

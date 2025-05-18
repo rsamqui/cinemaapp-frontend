@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "./theme";
-import ProtectedRoute from './routes/ProtectedRoute'; // Assuming correct path
+import ProtectedRoute from './routes/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
-import Home from './pages/home';
-import Login from './pages/login'; // Ensure consistent casing with filename, e.g., Login.jsx -> Login
-import AddMovie from './pages/addMovie'; // Ensure consistent casing, e.g., AddMovie.jsx -> AddMovie
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AddMovie from './pages/movies/addMovie';
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
         <Routes>
           {/* Public Routes (No auth needed, no MainLayout) */}
           <Route path="/login" element={<Login />} />
-          {/* <Route path="/register" element={<Register />} /> */}
+          <Route path="/register" element={<Register />} />
 
           {/* Routes that use MainLayout */}
           <Route element={<MainLayout />}>
