@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "./theme";
-import ProtectedRoute from './routes/ProtectedRoute';
+import ProtectedRoute from './constants/protectedRoute';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AddMovie from './pages/movies/addMovie';
+import SeatSelectionPage from './pages/movies/seatSelection';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route element={<MainLayout />}>
             {/* Public route within MainLayout */}
             <Route path="/" element={<Home />} />
+            <Route path="/bookings" element={<SeatSelectionPage />} />
 
             {/* Admin-only route, also within MainLayout */}
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

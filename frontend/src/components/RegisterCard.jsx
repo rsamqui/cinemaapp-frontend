@@ -96,25 +96,20 @@ function RegisterCard() {
     if (isValid) {
       console.log("Registration attempt with:", { name, email, password });
       try {
-        // The 'role' will be set by the backend.
-        // authService.register in AuthContext handles the actual API call.
         await register({ name, email, password });
         console.log("Registration successful");
-        // Navigate to login page after successful registration
-        // Optionally, you can show a success message first
         navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
       } catch (error) {
         console.error("Registration failed in component:", error);
         const errorMessage = error.message || error.error || "Registration failed. Please try again.";
-        // Check if the error object has specific field errors (depends on your backend response)
-        if (error.errors) { // Example: if backend returns { errors: { email: 'taken', name: 'too short' } }
+        
+        if (error.errors) {
           error.errors.forEach(err => {
             if (err.field === 'email') setEmailError(err.message);
             if (err.field === 'name') setNameError(err.message);
-            // Add more specific field errors if your backend provides them
           });
         } else {
-          setGeneralError(errorMessage); // Display general error
+          setGeneralError(errorMessage);
         }
       }
     }
@@ -122,7 +117,7 @@ function RegisterCard() {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <Container component="main" maxWidth="sm"> {/* Adjusted maxWidth for more fields */}
+      <Container component="main" maxWidth="sm">
         <Paper
           elevation={6}
           sx={{
