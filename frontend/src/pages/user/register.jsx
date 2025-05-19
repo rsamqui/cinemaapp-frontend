@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import LoginCard from "../components/LoginCard";
+import RegisterCard from "../../components/RegisterCard";
 import { useLocation } from "react-router-dom";
 import Typography from "@mui/material/Typography";
 
@@ -24,7 +24,7 @@ export default function Register() {
           {message}
         </Typography>
       )}
-      <LoginCard />
+      <RegisterCard />
     </Box>
   );
 }
