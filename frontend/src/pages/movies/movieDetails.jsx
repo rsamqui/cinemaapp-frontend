@@ -21,43 +21,59 @@ import {
 import movieService from '../../services/movieService';
 
 export default function MovieDetailPage() {
-  const { movieId } = useParams();
+  const { movieId: routeMovieId } = useParams(); // Get movieId from URL, rename to avoid conflict
   const navigate = useNavigate();
-
-  const [movieDetails, setMovieDetails] = useState(null);
+  const [apiResponse, setApiResponse] = useState(null); // Stores the direct API response
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!movieId) {
+    if (!routeMovieId) { // Use routeMovieId from params
       setError("Movie ID is missing.");
       setIsLoading(false);
       return;
     }
-
     const loadMovieDetails = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await movieService.getMovieScreeningDetails(movieId);
+        const data = await movieService.getMovieScreeningDetails(routeMovieId);
         console.log("MovieDetailPage - Fetched Data:", JSON.stringify(data, null, 2));
-        setMovieDetails(data);
+        setApiResponse(data); // Store the whole flat response
       } catch (err) {
-        console.error(`Failed to fetch details for movie ${movieId}:`, err);
+        console.error(`Failed to fetch details for movie ${routeMovieId}:`, err);
         setError(err.message || "Could not load movie details. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
-
     loadMovieDetails();
-  }, [movieId]);
+  }, [routeMovieId]);
 
   const handleBookNow = () => {
-    if (movieDetails && movieDetails.roomId) {
-      navigate(`/booking/${movieDetails.roomId}`);
+    if (apiResponse && (apiResponse.screeningId || apiResponse.roomId)) {
+      const bookingIdentifier = apiResponse.screeningId || apiResponse.roomId;
+
+      const movieInfoPayload = {
+        id: apiResponse.movieId,
+        title: apiResponse.movieTitle,
+        ticketPrice: apiResponse.ticketPrice || 230,
+        showtimeDate: apiResponse.showDate || "2025-05-20"
+      };
+      console.log("MovieDetailPage: Navigating with movieInfoPayload:", JSON.stringify(movieInfoPayload));
+      console.log("MovieDetailPage: Navigating to booking identifier:", bookingIdentifier);
+
+      navigate(`/bookings/${bookingIdentifier}`, {
+        state: {
+          movieInfo: movieInfoPayload,
+          roomInfo: {
+            id: apiResponse.roomId,
+            roomNumber: apiResponse.roomNumber,
+          }
+        }
+      });
     } else {
-      console.error("Cannot book, roomId not available from movieDetails.");
+      console.error("Cannot book, screeningId or roomId not available from movieDetails.");
       alert("Booking information is currently unavailable for this movie.");
     }
   };
@@ -82,7 +98,7 @@ export default function MovieDetailPage() {
     );
   }
 
-  if (!movieDetails) {
+  if (!apiResponse) {
     return (
       <Container sx={{ py: 4, textAlign: 'center' }}>
         <Typography variant="h5">Movie details not found.</Typography>
@@ -110,19 +126,19 @@ export default function MovieDetailPage() {
                 borderRadius: 2,
                 boxShadow: 3,
               }}
-              src={movieDetails.moviePosterUrl || "https://placehold.co/600x900/1c1c1c/ffffff?text=No+Image"}
-              alt={movieDetails.movieTitle}
+              src={apiResponse.moviePosterUrl || "https://placehold.co/600x900/1c1c1c/ffffff?text=No+Image"}
+              alt={apiResponse.movieTitle}
               onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/600x900/1c1c1c/ffffff?text=Error"; }}
             />
           </Grid>
           <Grid item xs={12} md={8}>
             <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-              {movieDetails.movieTitle}
+              {apiResponse.movieTitle}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-              {movieDetails.movieDuration && <Chip icon={<ScheduleIcon />} label={movieDetails.movieDuration} variant="outlined" size="small" />}
-              {movieDetails.roomNumber && <Chip icon={<TheatersIcon />} label={`Showing in Room ${movieDetails.roomNumber}`} variant="outlined" size="small" />}
+              {apiResponse.movieDuration && <Chip icon={<ScheduleIcon />} label={apiResponse.movieDuration} variant="outlined" size="small" />}
+              {apiResponse.roomNumber && <Chip icon={<TheatersIcon />} label={`Showing in Room ${apiResponse.roomNumber}`} variant="outlined" size="small" />}
             </Box>
             
             <Divider sx={{ my: 3 }} />
@@ -131,7 +147,7 @@ export default function MovieDetailPage() {
               Synopsis
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7 }}>
-              {movieDetails.movieSynopsis || "Synopsis not available."}
+              {apiResponse.movieSynopsis || "Synopsis not available."}
             </Typography>
 
             <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
@@ -141,7 +157,7 @@ export default function MovieDetailPage() {
                 size="large"
                 startIcon={<TicketIcon />}
                 onClick={handleBookNow}
-                disabled={!movieDetails.roomId} 
+                disabled={!apiResponse.roomId} 
               >
                 Book Now
               </Button>

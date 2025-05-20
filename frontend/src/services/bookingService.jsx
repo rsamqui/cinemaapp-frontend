@@ -15,7 +15,6 @@ const createBooking = async (bookingData) => {
   }
 };
 
-
 const getBookingDetailsForTicket = async (bookingId) => {
     try {
         const response = await apiClient.get(`/bookings/${bookingId}/ticket`);
@@ -27,7 +26,6 @@ const getBookingDetailsForTicket = async (bookingId) => {
         throw errData;
     }
 };
-
 
 export default {
   createBooking,

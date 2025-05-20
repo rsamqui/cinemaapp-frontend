@@ -2,13 +2,13 @@ import apiClient from './api';
 
 const getMovies = async () => {
   try {
-    const response = await apiClient.get('/movies');
+    const response = await apiClient.get('/movies'); // Endpoint to get all movies
     return response.data || [];
   } catch (error) {
-    console.error("Error fetching movies:", error.response?.data || error.message);
-    throw error.response?.data || new Error("Failed to fetch movies");
+    console.error("Error fetching all movies:", error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to fetch movies: ${error.message}`);
   }
-}
+};
 
 const getNowShowing = async () => {
   try {
@@ -30,15 +30,19 @@ const getMovieScreeningDetails = async (movieId) => {
   }
 };
 
-const getAvailableMovies = async () => {
+const getAvailableMovies = async (roomId = null) => {
   try {
-    const response = await apiClient.get('/movies/available');
-    return response.data;
+    let endpoint = '/movies/available';
+    if (roomId) {
+      console.log(`Workspaceing available movies, context roomId: ${roomId}`);
+    }
+    const response = await apiClient.get(endpoint);
+    return response.data || [];
   } catch (error) {
     console.error("Error fetching available movies:", error.response?.data || error.message);
-    throw error.response?.data || new Error("Failed to fetch available movies");
+    throw error.response?.data || new Error(`Failed to fetch available movies: ${error.message}`);
   }
-}
+};
 
 const createNewMovie = async (roomData) => {
   try {

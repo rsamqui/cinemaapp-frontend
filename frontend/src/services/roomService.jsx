@@ -12,11 +12,14 @@ const getRooms = async () => {
 
 const getRoomById = async (roomId) => {
   try {
+    console.log(`roomService: Calling GET /rooms with params: { id: ${roomId} }`);
     const response = await apiClient.get('/rooms', {
       params: {
         id: roomId,
       },
     });
+    console.log(`roomService: Response status for room ${roomId}: ${response.status}`);
+    console.log(`roomService: Response data for room ${roomId}:`, JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
     console.error(`Error fetching room with id=${roomId}:`, error.response?.data || error.message);
@@ -41,11 +44,11 @@ const createNewRoom = async (roomData) => {
 
 const updateRoom = async (roomId, roomData) => {
   try {
-    const response = await apiClient.put('/rooms', roomData, { params: { id: roomId } });
+    const response = await apiClient.put(`/rooms/${roomId}`, roomData);
     return response.data;
   } catch (error) {
     console.error(`Error updating room ${roomId}:`, error.response?.data || error.message);
-    const errData = error.response?.data || { message: `Failed to update room ${roomId}` };
+    const errData = error.response?.data || { message: `Failed to update room ${roomId}: ${error.message}` };
     if (typeof errData === 'string') {
         throw new Error(errData);
     }

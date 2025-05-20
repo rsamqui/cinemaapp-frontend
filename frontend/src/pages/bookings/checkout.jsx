@@ -1,56 +1,85 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+console.log(JSON.stringify(location.state, null, 2));
+
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container, Typography, Paper, Box, Button, Grid, Divider,
   TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
   CircularProgress, Alert, List, ListItem, ListItemText, ListItemIcon,
 } from '@mui/material';
-import { Movie as MovieIcon, EventSeat as EventSeatIcon, Person as PersonIcon, Payments as PaymentsIcon, Theaters as TheatersIcon, CalendarToday } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
-import bookingService from '../services/bookingService';
+import {
+  Movie as MovieIcon,
+  Theaters as TheatersIcon,
+  EventSeat as EventSeatIcon,
+  Person as PersonIcon,
+  Payments as PaymentsIcon,
+  CalendarToday as CalendarIcon,
+  ArrowBack as ArrowBackIcon,
+} from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import bookingService from '../../services/bookingService';
 
 export default function CheckoutPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
-  const {
-    selectedSeats,
-    movieDetails,
-    roomInfo,
-    showDate,
-    totalPrice,
-  } = location.state || {};
-
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState(null);
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
-
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  if (!isAuthenticated || !user) {
-    navigate('/login', { state: { from: location }, replace: true });
-    return null;
-  }
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
-  if (!selectedSeats || selectedSeats.length === 0 || !movieDetails || !roomInfo || !showDate || totalPrice === undefined) {
+  const {
+    selectedSeats, 
+    movieDetails,
+    roomInfo,
+    showDate,
+    price,
+  } = location.state || {};
+
+  console.log("CheckoutPage location.state:", location.state);
+  console.log("CheckoutPage destructured values:", { selectedSeats, movieDetails, roomInfo, showDate, price });
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      console.log("CheckoutPage: User not authenticated, redirecting to login.");
+      navigate('/login', { state: { from: location }, replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location]);
+
+
+  if (!selectedSeats || selectedSeats.length === 0 || !movieDetails || !roomInfo || !showDate || price === undefined) {
+    console.error("CheckoutPage: Essential booking data missing from location.state. Rendering warning.");
     return (
       <Container sx={{ py: 4, textAlign: 'center' }}>
-        <Alert severity="warning">Incomplete booking information. Please select your seats again.</Alert>
-        <Button onClick={() => navigate('/')} sx={{ mt: 2 }}>Back to Movies</Button>
+        <Alert severity="warning" sx={{mb: 2}}>
+          Incomplete booking information. Please start over from the seat selection.
+        </Alert>
+        <Button component={RouterLink} to="/" variant="outlined" startIcon={<ArrowBackIcon />}>
+          Back to Movies
+        </Button>
       </Container>
     );
   }
 
-  const handleOpenPaymentModal = () => setOpenPaymentModal(true);
-  const handleClosePaymentModal = () => setOpenPaymentModal(false);
+  const handleOpenPaymentModal = () => {
+    setPaymentError(null);
+    setOpenPaymentModal(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    if (!isProcessingPayment) { 
+        setOpenPaymentModal(false);
+    }
+  };
 
   const handleConfirmPayment = async () => {
-    if (!cardName || !cardNumber || !expiryDate || !cvv) { 
-        alert("Please fill in all card details.");
+    if (!cardName.trim() || !cardNumber.trim() || !expiryDate.trim() || !cvv.trim()) {
+        setPaymentError("Please fill in all card details.");
         return;
     }
     setIsProcessingPayment(true);
@@ -61,20 +90,26 @@ export default function CheckoutPage() {
       movieId: movieDetails.id,
       roomId: roomInfo.id,
       seatDbIds: selectedSeats.map(seat => seat.dbId),
-      totalPrice: totalPrice,
+      totalPrice: price,
       showDate: showDate,
     };
 
-    console.log("Attempting to create booking with payload:", bookingPayload);
+    console.log("CheckoutPage: Attempting to create booking with payload:", JSON.stringify(bookingPayload));
 
     try {
+      console.log("CheckoutPage: Final bookingPayload being sent:", JSON.stringify(bookingPayload, null, 2));
       const bookingConfirmation = await bookingService.createBooking(bookingPayload);
-      console.log("Booking successful, response:", bookingConfirmation);
+      console.log("CheckoutPage: Booking successful, response:", bookingConfirmation);
       handleClosePaymentModal();
-      navigate(`/bookings/ticket/${bookingConfirmation.bookingId}`, { replace: true });
+      if (bookingConfirmation && bookingConfirmation.bookingId) {
+        navigate(`/bookings/ticket/${bookingConfirmation.bookingId}`, { replace: true });
+      } else {
+        console.error("CheckoutPage: Booking ID not found in confirmation response.", bookingConfirmation);
+        setPaymentError("Booking confirmed, but there was an issue retrieving your ticket ID. Please contact support.");
+      }
     } catch (err) {
-      console.error("Payment/Booking failed:", err);
-      setPaymentError(err.message || "An error occurred during booking. Please try again.");
+      console.error("CheckoutPage: Payment/Booking failed:", err);
+      setPaymentError(err.message || err.error || "An error occurred during booking. Please try again.");
     } finally {
       setIsProcessingPayment(false);
     }
@@ -82,76 +117,103 @@ export default function CheckoutPage() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 } }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3 }}>
-          Confirm Your Booking
+      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3, fontWeight: 'bold' }}>
+          Checkout Summary
         </Typography>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={4}>
+          {/* Booking Details Section */}
           <Grid item xs={12} md={7}>
-            <Typography variant="h6" gutterBottom>Booking Details:</Typography>
-            <List dense>
-              <ListItem>
-                <ListItemIcon><MovieIcon color="primary"/></ListItemIcon>
-                <ListItemText primary="Movie" secondary={movieDetails.title} />
+            <Typography variant="h6" gutterBottom sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 1, mb: 2}}>
+              Booking For:
+            </Typography>
+            <List dense disablePadding>
+              <ListItem disableGutters>
+                <ListItemIcon sx={{minWidth: 40}}><MovieIcon color="primary"/></ListItemIcon>
+                <ListItemText primaryTypographyProps={{fontWeight: 'medium'}} primary="Movie" secondary={movieDetails.title || 'N/A'} />
               </ListItem>
-              <ListItem>
-                <ListItemIcon><TheatersIcon color="primary"/></ListItemIcon>
-                <ListItemText primary="Room" secondary={roomInfo.roomNumber} />
+              <ListItem disableGutters>
+                <ListItemIcon sx={{minWidth: 40}}><TheatersIcon color="primary"/></ListItemIcon>
+                <ListItemText primaryTypographyProps={{fontWeight: 'medium'}} primary="Room" secondary={roomInfo.roomNumber || 'N/A'} />
               </ListItem>
-              <ListItem>
-                <ListItemIcon><CalendarToday color="primary"/></ListItemIcon>
-                <ListItemText primary="Show Date" secondary={new Date(showDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} />
+              <ListItem disableGutters>
+                <ListItemIcon sx={{minWidth: 40}}><CalendarIcon color="primary"/></ListItemIcon>
+                <ListItemText 
+                  primaryTypographyProps={{fontWeight: 'medium'}} 
+                  primary="Show Date" 
+                  secondary={showDate ? new Date(showDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'} 
+                />
               </ListItem>
-              <ListItem>
-                <ListItemIcon><EventSeatIcon color="primary"/></ListItemIcon>
-                <ListItemText primary="Seats" secondary={`${selectedSeats.map(s => s.id).join(', ')} (${selectedSeats.length})`} />
+              <ListItem disableGutters>
+                <ListItemIcon sx={{minWidth: 40}}><EventSeatIcon color="primary"/></ListItemIcon>
+                <ListItemText 
+                  primaryTypographyProps={{fontWeight: 'medium'}} 
+                  primary="Seats" 
+                  secondary={`${selectedSeats.map(s => s.id).join(', ')} (${selectedSeats.length} total)`} 
+                />
               </ListItem>
-              <ListItem>
-                <ListItemIcon><PersonIcon color="primary"/></ListItemIcon>
-                <ListItemText primary="Booked By" secondary={user.name || user.email} />
+              <ListItem disableGutters>
+                <ListItemIcon sx={{minWidth: 40}}><PersonIcon color="primary"/></ListItemIcon>
+                <ListItemText primaryTypographyProps={{fontWeight: 'medium'}} primary="Booked By" secondary={user?.name || user?.email || 'Guest'} />
               </ListItem>
             </List>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'right' }}>
-              Total: {new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(totalPrice)}
-            </Typography>
+            
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+                Total Amount:
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                {new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(price)}
+                </Typography>
+            </Box>
           </Grid>
 
-          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Payment Action Section */}
+          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: {md: '1px solid'}, borderColor: {md: 'divider'}, pl: {md: 3} }}>
+             <Typography variant="h6" gutterBottom>
+              Confirm Payment
+            </Typography>
+            <PaymentsIcon sx={{fontSize: 60, color: 'primary.light', my: 2}}/>
             <Button
-              variant="contained" color="primary" size="large" fullWidth
-              startIcon={<PaymentsIcon />} onClick={handleOpenPaymentModal}
-              sx={{ py: 1.5, fontSize: '1.1rem' }}
+              variant="contained"
+              color="primary"
+              size="large"
+              fullWidth
+              onClick={handleOpenPaymentModal}
+              sx={{ py: 1.5, fontSize: '1.1rem', mt:1 }}
             >
-              Proceed to Payment
+              Enter Card Details
             </Button>
-            {paymentError && <Alert severity="error" sx={{mt:2}}>{paymentError}</Alert>}
           </Grid>
         </Grid>
       </Paper>
 
-      <Dialog open={openPaymentModal} onClose={handleClosePaymentModal}>
-        <DialogTitle>Simulated Secure Payment</DialogTitle>
-        <DialogContent>
+      {/* Mock Payment Modal */}
+      <Dialog open={openPaymentModal} onClose={handleClosePaymentModal} PaperProps={{component: 'form', onSubmit: (e) => { e.preventDefault(); handleConfirmPayment(); } }}>
+        <DialogTitle sx={{backgroundColor: 'primary.main', color: 'primary.contrastText'}}>Simulated Secure Payment</DialogTitle>
+        <DialogContent sx={{pt: '20px !important'}}>
           <DialogContentText sx={{mb:2}}>
-            This is a non-functional payment form. Enter any details to proceed.
+            This is a non-functional payment form. Enter any details to simulate booking.
           </DialogContentText>
-          <TextField autoFocus margin="dense" id="cardName" label="Name on Card" type="text" fullWidth variant="standard" value={cardName} onChange={e => setCardName(e.target.value)} />
-          <TextField margin="dense" id="cardNumber" label="Card Number (e.g., 4242...)" type="text" fullWidth variant="standard" value={cardNumber} onChange={e => setCardNumber(e.target.value)} />
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <TextField margin="dense" id="expiryDate" label="Expiry (MM/YY)" type="text" fullWidth variant="standard" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} />
+          <TextField autoFocus margin="dense" id="cardName" label="Name on Card" type="text" fullWidth variant="outlined" value={cardName} onChange={e => setCardName(e.target.value)} required/>
+          <TextField margin="dense" id="cardNumber" label="Card Number (e.g., 4242...)" type="text" fullWidth variant="outlined" value={cardNumber} onChange={e => setCardNumber(e.target.value)} required/>
+          <Grid container spacing={2} sx={{mt: 0.5}}>
+            <Grid item xs={7}>
+              <TextField margin="dense" id="expiryDate" label="Expiry (MM/YY)" type="text" fullWidth variant="outlined" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required/>
             </Grid>
-            <Grid item xs={6}>
-              <TextField margin="dense" id="cvv" label="CVV" type="text" fullWidth variant="standard" value={cvv} onChange={e => setCvv(e.target.value)} />
+            <Grid item xs={5}>
+              <TextField margin="dense" id="cvv" label="CVV" type="text" fullWidth variant="outlined" value={cvv} onChange={e => setCvv(e.target.value)} required/>
             </Grid>
           </Grid>
+          {paymentError && <Alert severity="error" sx={{mt:2, width: '100%'}}>{paymentError}</Alert>}
         </DialogContent>
         <DialogActions sx={{p: '16px 24px'}}>
-          <Button onClick={handleClosePaymentModal} color="secondary">Cancel</Button>
-          <Button onClick={handleConfirmPayment} variant="contained" disabled={isProcessingPayment}>
-            {isProcessingPayment ? <CircularProgress size={24} /> : `Pay ${new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(totalPrice)}`}
+          <Button onClick={handleClosePaymentModal} color="inherit">Cancel</Button>
+          <Button type="submit" variant="contained" disabled={isProcessingPayment}>
+            {isProcessingPayment ? <CircularProgress color="inherit" size={24} /> : `Confirm & Pay ${new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(price)}`}
           </Button>
         </DialogActions>
       </Dialog>
