@@ -1,4 +1,3 @@
-// src/pages/admin/CreateRoomPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,28 +16,18 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import RoomEditorLayout from "../../components/Room"; // Your RoomEditorLayout component
-// import { SEAT_STATUS } from '../../constants/seatConstants'; // Not strictly needed if not sending layout
-import roomService from "../../services/roomService"; // Import your actual room service
-import movieService from "../../services/movieService"; // Assuming you have a movie service
+import RoomEditorLayout from "../../components/Room";
+import roomService from "../../services/roomService"; 
+import movieService from "../../services/movieService"; 
 
-// --- Mock API Calls (Keep for fallback or remove if using actual services) ---
-// const fetchMoviesMock = async () => { /* ... */ };
-// const saveRoomConfigurationAPIMock = async (config) => { /* ... */ };
-// --- End Mock API Calls ---
-
-const MAX_ADMIN_ROWS = 26; // A-Z
-const MAX_ADMIN_COLS = 12; // Example max
-
-// Define a stable empty array reference outside the component for externallySetSeats
-const EMPTY_EXTERNALLY_SET_SEATS = [];
+const MAX_ADMIN_ROWS = 26;
+const MAX_ADMIN_COLS = 12;
 
 export default function CreateRoomPage() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
 
-  const [roomName, setRoomName] = useState(""); // Descriptive name (optional if not sent to this API)
-  const [roomNumber, setRoomNumber] = useState(""); // For the "roomNumber" field in payload
+  const [roomNumber, setRoomNumber] = useState("");
   const [numRows, setNumRows] = useState(7);
   const [numCols, setNumCols] = useState(12);
   const [selectedMovieId, setSelectedMovieId] = useState("");
@@ -46,7 +35,6 @@ export default function CreateRoomPage() {
   const [isLoadingMovies, setIsLoadingMovies] = useState(true);
   const [movieError, setMovieError] = useState(null);
 
-  // currentSeatLayout is kept for the visual preview, but not sent to /newRoom endpoint
   const [currentSeatLayout, setCurrentSeatLayout] = useState([]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -55,24 +43,22 @@ export default function CreateRoomPage() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
-    const loadMovies = async () => {
-      setIsLoadingMovies(true);
-      setMovieError(null);
-      try {
-        const fetchedMovies = await movieService.getMovies();
-        setMovies(fetchedMovies || []);
-      } catch (err) {
-        console.error("Failed to fetch movies:", err);
-        setMovieError("Could not load movies. Please try again.");
-      } finally {
-        setIsLoadingMovies(false);
-      }
-    };
-    loadMovies();
-  }, []);
-
-  // This callback is still useful if RoomEditorLayout allows interaction (e.g. blocking seats)
-  // even if that specific data isn't sent to THIS /newRoom endpoint.
+  const loadMovies = async () => {
+    setIsLoadingMovies(true);
+    setMovieError(null);
+    try {
+      const fetchedMovies = await movieService.getAvailableMovies();
+      setMovies(fetchedMovies || []);
+    } catch (err) {
+      console.error("Failed to fetch movies:", err);
+          setMovieError("Could not load movies list.");
+    } finally {
+      setIsLoadingMovies(false);
+    }
+  };
+  loadMovies();
+}, []); 
+  
   const handleRoomLayoutChange = useCallback((newLayout) => {
     setCurrentSeatLayout(newLayout);
     console.log(
@@ -99,11 +85,6 @@ export default function CreateRoomPage() {
       setSaveError("Rows and columns must be greater than 0.");
       return;
     }
-    // Add validation for roomName if it's also required by another process or for display
-    if (!roomName.trim()) {
-      setSaveError("Room/Screen Name is required for descriptive purposes.");
-      // return; // You might still allow submission if /newRoom API doesn't need it
-    }
 
     setIsSaving(true);
 
@@ -121,14 +102,12 @@ export default function CreateRoomPage() {
       console.log("Room created successfully:", response);
       setSnackbarMessage(`Room number ${payload.roomNumber} configured successfully!`);
       setSnackbarOpen(true);
-      // Reset form
-      setRoomName("");
       setRoomNumber("");
       setSelectedMovieId("");
       setNumRows(7);
       setNumCols(12);
-      setCurrentSeatLayout([]); // Reset visual layout
-      // navigate('/admin/rooms-list'); // Optional: navigate to a list of rooms
+      setCurrentSeatLayout([]); 
+      // navigate('/rooms');
     } catch (err) {
       console.error("Failed to create room via API:", err);
       setSaveError(err.message || "An unexpected error occurred while saving the room.");
@@ -276,10 +255,10 @@ export default function CreateRoomPage() {
           {/* RoomEditorLayout is still useful for visual feedback of dimensions */}
           {numRows > 0 && numCols > 0 ? (
             <RoomEditorLayout
-              key={`${numRows}-${numCols}-${currentSeatLayout.length}`} // Added currentSeatLayout.length to key
+              key={`${numRows}-${numCols}-${currentSeatLayout.length}`}
               initialRows={numRows}
               initialCols={numCols}
-              isEditable={true} // Admin can still mark seats as BLOCKED visually
+              isEditable={true}
               externallySetSeats={
                 currentSeatLayout.length > 0
                   ? currentSeatLayout

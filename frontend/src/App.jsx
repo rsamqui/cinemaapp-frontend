@@ -9,14 +9,13 @@ import Register from './pages/user/Register';
 import AddMovie from './pages/movies/addMovie';
 import SeatSelectionPage from './pages/bookings/seatSelection';
 import CreateRoomPage from './pages/rooms/createRoom';
+import EditRoomPage from './pages/rooms/editRoom';
+import ListRoomsPage from './pages/movies/listMovies';
+import MovieDetailPage from './pages/movies/movieDetails';
 
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
-      {/* CssBaseline was removed in a previous step, ensure that was intentional
-          or re-add it here if MUI components look odd without it.
-          If Tailwind's preflight is your only base, that's fine.
-      */}
       {/* <CssBaseline /> */}
       <Router>
         <Routes>
@@ -33,13 +32,15 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
               <Route path="/movies/add" element={<AddMovie />} />
               <Route path="/rooms/create" element={<CreateRoomPage />} />
+              <Route path="/rooms/edit/:roomId" element={<EditRoomPage />} />
               {/* You can add other admin routes here that need the MainLayout */}
             </Route>
 
             {/* Admin-only route, also within MainLayout */}
-            <Route element={<ProtectedRoute allowedRoles={['client']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['client','admin']} />}>
               <Route path="/bookings" element={<SeatSelectionPage />} />
-              <Route path="/rooms" element={<CreateRoomPage />} />
+              <Route path="/movies" element={<ListRoomsPage />} />
+              <Route path="/movies/details/:movieId" element={<MovieDetailPage />} />
             {/*  <Route path="/profile" element={<div>User Profile</div>} /> */}
             </Route>
             

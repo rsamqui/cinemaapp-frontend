@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx (or Header.jsx)
 import { useState, useEffect } from "react";
 import {
   AppBar,
@@ -26,7 +25,7 @@ import { useTheme } from "@mui/material/styles";
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function Header() { // Renamed to Header to match your MainLayout import
+export default function Header() { 
   const theme = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -95,13 +94,10 @@ export default function Header() { // Renamed to Header to match your MainLayout
       onClose={handleMenuClose}
       sx={{ '& .MuiPaper-root': { width: '200px' } }}
     >
-      <MenuItem onClick={() => handleNavigate('/')}>Movies</MenuItem>
-      <MenuItem onClick={() => handleNavigate('/cinemas')}>Cinemas</MenuItem>
-      <MenuItem onClick={() => handleNavigate('/offers')}>Offers</MenuItem>
-      <MenuItem onClick={() => handleNavigate('/membership')}>Membership</MenuItem>
+      <MenuItem onClick={() => handleNavigate('/movies')}>Movies</MenuItem>
       <Box sx={{ my: 1 }}><hr /></Box>
       {isAuthenticated
-        ? [ // Return an array of MenuItems
+        ? [ 
             <MenuItem key="profile" onClick={() => handleNavigate('/profile')}>
               <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> Profile
             </MenuItem>,
@@ -153,10 +149,7 @@ export default function Header() { // Renamed to Header to match your MainLayout
 
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: 'center' }}>
-              <Button component={RouterLink} to="/" color="inherit">Movies</Button>
-              <Button component={RouterLink} to="/cinemas" color="inherit">Cinemas</Button>
-              <Button component={RouterLink} to="/offers" color="inherit">Offers</Button>
-              <Button component={RouterLink} to="/membership" color="inherit">Membership</Button>
+              <Button component={RouterLink} to="/movies" color="inherit">Movies</Button>
             </Box>
           )}
 
@@ -179,11 +172,9 @@ export default function Header() { // Renamed to Header to match your MainLayout
               </IconButton>
             ) : (
               isAuthenticated ? (
-                // Use a Box to group the name button and potentially an icon if desired
-                // The Button with the user's name will open the profile menu
                 <Button
                   color="inherit"
-                  onClick={handleProfileMenuOpen} // This button opens the profile dropdown
+                  onClick={handleProfileMenuOpen} 
                   aria-controls={menuId}
                   aria-haspopup="true"
                   startIcon={<Avatar sx={{ width: 28, height: 28, bgcolor: 'secondary.main', fontSize: '0.8rem' }}>{userName.charAt(0).toUpperCase()}</Avatar>}
@@ -191,11 +182,6 @@ export default function Header() { // Renamed to Header to match your MainLayout
                 >
                   {userName}
                 </Button>
-                // If you want an AccountCircle icon in addition or instead, place it here.
-                // For instance, if the button above only showed name and didn't open menu:
-                // <IconButton onClick={handleProfileMenuOpen} color="inherit">
-                //   <AccountCircle />
-                // </IconButton>
               ) : (
                 <Button
                   variant="contained"
@@ -210,8 +196,6 @@ export default function Header() { // Renamed to Header to match your MainLayout
           </Box>
         </Toolbar>
       </AppBar>
-      {/* Only render renderProfileMenu if not on mobile AND if there's an anchor (menu is open) */}
-      {/* The Menu component itself handles the 'open' prop, so we just need to pass it to render */}
       {!isMobile && renderProfileMenu}
       {renderMobileNavMenu}
       <Toolbar /> {/* Spacer */}

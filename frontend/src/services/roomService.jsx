@@ -10,6 +10,24 @@ const getRooms = async () => {
   }
 }
 
+const getRoomById = async (roomId) => {
+  try {
+    const response = await apiClient.get('/rooms', {
+      params: {
+        id: roomId,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching room with id=${roomId}:`, error.response?.data || error.message);
+    const errData = error.response?.data || { message: `Failed to fetch room ${roomId}` };
+    if (typeof errData === 'string') {
+        throw new Error(errData);
+    }
+    throw errData;
+  }
+};
+
 const createNewRoom = async (roomData) => {
   try {
     console.log("roomService: Calling POST /rooms/newRoom with data:", roomData);
@@ -21,11 +39,34 @@ const createNewRoom = async (roomData) => {
   }
 };
 
-// You might have other room-related functions here
-// const getRoomLayout = async (roomId) => { ... };
-// const updateRoomLayout = async (roomId, layoutData) => { ... };
+const updateRoom = async (roomId, roomData) => {
+  try {
+    const response = await apiClient.put('/rooms', roomData, { params: { id: roomId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating room ${roomId}:`, error.response?.data || error.message);
+    const errData = error.response?.data || { message: `Failed to update room ${roomId}` };
+    if (typeof errData === 'string') {
+        throw new Error(errData);
+    }
+    throw errData;
+  }
+};
+
+const deleteRoom = async (roomId) => {
+  try {
+    const response = await apiClient.delete(`/rooms/${roomId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting room ${roomId}:`, error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to delete room ${roomId}`);
+  }
+};
 
 export default {
     getRooms,
+    getRoomById,
     createNewRoom,
+    updateRoom,
+    deleteRoom
 };
