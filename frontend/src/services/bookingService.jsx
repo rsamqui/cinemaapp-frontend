@@ -17,7 +17,7 @@ const createBooking = async (bookingData) => {
 
 const getBookingDetailsForTicket = async (bookingId) => {
     try {
-        const response = await apiClient.get(`/bookings/${bookingId}/ticket`);
+        const response = await apiClient.get(`/bookings/ticket/${bookingId}`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching booking details for ticket ${bookingId}:`, error.response?.data || error.message);

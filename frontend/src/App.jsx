@@ -13,6 +13,7 @@ import EditRoomPage from './pages/rooms/editRoom';
 import ListRoomsPage from './pages/movies/listMovies';
 import MovieDetailPage from './pages/movies/movieDetails';
 import CheckoutPage from './pages/bookings/checkout';
+import TicketPage from './pages/bookings/ticketPage';
 
 function App() {
   return (
@@ -39,10 +40,11 @@ function App() {
 
             {/* Admin-only route, also within MainLayout */}
             <Route element={<ProtectedRoute allowedRoles={['client','admin']} />}>
-              <Route path="/bookings/:roomId" element={<SeatSelectionPage />} />
+              <Route path="/bookings/:screeningId" element={<SeatSelectionPage />} />
               <Route path="/movies" element={<ListRoomsPage />} />
               <Route path="/movies/details/:movieId" element={<MovieDetailPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/bookings/ticket/:bookingId" element={<TicketPage />} />
             {/*  <Route path="/profile" element={<div>User Profile</div>} /> */}
             </Route>
             

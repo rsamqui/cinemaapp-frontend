@@ -1,6 +1,5 @@
-// src/pages/SeatSelectionPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Typography,
@@ -15,32 +14,29 @@ import {
 } from "@mui/material";
 import Room from "../../components/Room";
 import { SEAT_STATUS } from "../../constants/seatConstants";
-import roomService from "../../services/roomService"; // Assuming this service exists
+import roomService from "../../services/roomService";
 
-// Default movie details in case location.state.movieInfo is not available
 const DEFAULT_MOVIE_DETAILS = {
   id: null,
   title: "Movie Loading...",
-  ticketPrice: 230,
-  showtime: "N/A",
+  showtimeDate: "N/A", // Added for placeholder
+  showtimeTime: "N/A", // Added for placeholder
   screen: "N/A",
 };
 
 export default function SeatSelectionPage() {
-  const { roomId } = useParams(); // This is the identifier for the specific showing/room content
+  const { screeningId } = useParams(); // This is the identifier from the URL
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize movieDetails with data from location.state or a default object
   const [movieDetails, setMovieDetails] = useState(
     location.state?.movieInfo || DEFAULT_MOVIE_DETAILS
   );
-
   const [roomConfig, setRoomConfig] = useState({
     rows: 0,
     cols: 0,
     roomNumber: null,
-    roomId: null,
+    roomId: null, // This will be the DB ID of the room, same as screeningId in this simplified model
     movieId: null,
   });
   const [initialSeatStatuses, setInitialSeatStatuses] = useState([]);
@@ -53,11 +49,8 @@ export default function SeatSelectionPage() {
     JSON.stringify(location.state?.movieInfo)
   );
 
-  // Safely access TICKET_PRICE, provide default if movieDetails or ticketPrice is missing
-  const TICKET_PRICE =
-    movieDetails?.ticketPrice || DEFAULT_MOVIE_DETAILS.ticketPrice;
+  const TICKET_PRICE = 230;
 
-  // useEffect to log state updates (for debugging, can be removed later)
   useEffect(() => {
     console.log(
       "SeatSelectionPage: movieDetails state updated:",
@@ -73,19 +66,19 @@ export default function SeatSelectionPage() {
   }, [roomConfig]);
 
   const loadLayout = useCallback(async () => {
-    if (!roomId) {
-      setError("Screening information is missing.");
+    if (!screeningId) {
+      setError("Screening/Room ID information is missing in URL.");
       setIsLoading(false);
       return;
     }
     console.log(
-      "SeatSelectionPage (loadLayout): Executing for roomId/roomId:",
-      roomId
+      "SeatSelectionPage (loadLayout): Executing for screeningId (used as roomId):",
+      screeningId
     );
     setIsLoading(true);
     setError(null);
     try {
-      const responseArray = await roomService.getRoomById(roomId);
+      const responseArray = await roomService.getRoomById(screeningId); // screeningId is the room's ID here
       console.log(
         "SeatSelectionPage (loadLayout): Fetched API responseArray:",
         JSON.stringify(responseArray)
@@ -93,13 +86,9 @@ export default function SeatSelectionPage() {
 
       if (Array.isArray(responseArray) && responseArray.length > 0) {
         const roomData = responseArray[0];
-
         console.log(
           "SeatSelectionPage (loadLayout): Extracted roomData:",
           JSON.stringify(roomData)
-        );
-        console.log(
-          `SeatSelectionPage (loadLayout): Before setState - roomData.totalRows: ${roomData.totalRows}, roomData.totalColumns: ${roomData.totalColumns}`
         );
 
         if (roomData && roomData.id) {
@@ -107,73 +96,54 @@ export default function SeatSelectionPage() {
             rows: roomData.totalRows || 0,
             cols: roomData.totalColumns || 0,
             roomNumber: roomData.roomNumber || "N/A",
-            roomId: roomData.id,
-            movieId: roomData.movieId,
+            roomId: roomData.id, // This is the room's DB ID
+            movieId: roomData.movieId, // Movie ID associated with this room
           });
-          setInitialSeatStatuses(roomData.seatLayout || []);
+          // Ensure seatLayout has dbId for each seat
+          setInitialSeatStatuses(
+            (roomData.seatLayout || []).map(seat => ({...seat, dbId: seat.dbId || seat.id}))
+          );
           setUserSelectedSeatIds(new Set());
 
-          if (roomData.movieTitle) {
-            setMovieDetails((prev) => ({
-              ...(prev || DEFAULT_MOVIE_DETAILS),
-              title: roomData.movieTitle, // This would be correct if roomData has movieTitle
-              id: roomData.movieId, // This correctly uses data.movieId from roomData
-              ticketPrice:
-                roomData.ticketPrice ||
-                prev?.ticketPrice ||
-                DEFAULT_MOVIE_DETAILS.ticketPrice,
-            }));
-          } else if (roomData.movie && typeof roomData.movie === "object") {
-            setMovieDetails((prev) => ({
-              ...(prev || DEFAULT_MOVIE_DETAILS),
-              ...roomData.movie,
-            }));
-          }
+          // Update movieDetails state. Prioritize data linked directly to the room/screening.
+          setMovieDetails(prev => {
+            const baseDetails = location.state?.movieInfo && location.state.movieInfo.id
+                                ? location.state.movieInfo
+                                : (prev && prev.id ? prev : DEFAULT_MOVIE_DETAILS);
+            return {
+              ...baseDetails,
+              id: roomData.movieId || baseDetails.id,
+              title: roomData.movieTitle || baseDetails.title,
+              ticketPrice: 230,
+              screen: roomData.roomNumber || baseDetails.screen,
+              // showtimeDate and showtimeTime should ideally come from roomData if it's specific
+              // For now, relying on what might have been passed from MovieDetailPage
+              showtimeDate: baseDetails.showtimeDate,
+              showtimeTime: baseDetails.showtimeTime,
+            };
+          });
           console.log(
-            "SeatSelectionPage (loadLayout): setState calls made with extracted roomData."
+            "SeatSelectionPage (loadLayout): setState calls made."
           );
         } else {
-          console.error(
-            "SeatSelectionPage (loadLayout): Extracted roomData is missing an ID or is invalid:",
-            roomData
-          );
           throw new Error("Extracted room data is invalid (e.g., missing ID).");
         }
       } else {
-        console.error(
-          "SeatSelectionPage (loadLayout): No room data found in API response or unexpected array format:",
-          responseArray
-        );
         throw new Error("Room data not found or API returned an empty array.");
       }
     } catch (err) {
-      console.error(
-        "SeatSelectionPage (loadLayout): Failed to load room layout:",
-        err
-      );
-      setError(
-        err.message ||
-          "Sorry, we couldn't load the seat map. Please try again later."
-      );
-      setRoomConfig({
-        rows: 0,
-        cols: 0,
-        roomNumber: null,
-        roomId: null,
-        movieId: null,
-      }); // Reset on error
+      console.error("SeatSelectionPage (loadLayout): Failed to load room layout:",err);
+      setError( err.message || "Sorry, we couldn't load the seat map. Please try again later.");
+      setRoomConfig({ rows: 0, cols: 0, roomNumber: null, roomId: null, movieId: null });
       setInitialSeatStatuses([]);
     } finally {
       setIsLoading(false);
-      console.log(
-        "SeatSelectionPage (loadLayout): Finished, setIsLoadingPage(false)."
-      );
     }
-  }, [roomId]); // Added location.state.movieInfo as a dependency
+  }, [screeningId, location.state?.movieInfo]); // Added location.state.movieInfo dependency
 
   useEffect(() => {
     loadLayout();
-  }, [loadLayout]); // useEffect depends on the stable loadLayout function
+  }, [loadLayout]);
 
   const handleSeatSelect = useCallback((seatInfo, attemptedNewStatus) => {
     setUserSelectedSeatIds((prevSelectedIds) => {
@@ -238,6 +208,7 @@ export default function SeatSelectionPage() {
 
   const calculateTotalPrice = () => userSelectedSeatIds.size * TICKET_PRICE;
 
+  // RENAMED THIS FUNCTION
   const handleProceedToCheckout = () => {
     if (userSelectedSeatIds.size === 0) {
       alert("Please select at least one seat.");
@@ -251,33 +222,39 @@ export default function SeatSelectionPage() {
     if (
       seatsToBook.some((seat) => seat.dbId === null || seat.dbId === undefined)
     ) {
-      alert(
-        "Error: Some selected seats are missing database IDs. Cannot proceed."
-      );
-      console.error(
-        "Selected seats with missing dbId:",
-        seatsToBook.filter((s) => !s.dbId)
-      );
+      alert("Error: Some selected seats are missing database IDs. Cannot proceed.");
+      console.error("Selected seats with missing dbId:", seatsToBook.filter((s) => !s.dbId));
       return;
     }
 
-    navigate("/checkout", {
-      state: {
-        selectedSeats: seatsToBook,
-        movieDetails: {
-          id: movieDetails.id,
-          title: movieDetails.title,
-          ticketPrice: TICKET_PRICE,
-        },
-        roomInfo: {
-          id: roomConfig.roomId,
-          roomNumber: roomConfig.roomNumber,
-        },
-        showDate: movieDetails.showtimeDate || "2025-05-20",
-        totalPrice: calculateTotalPrice(),
+    const navigationState = {
+      selectedSeats: seatsToBook,
+      movieDetails: {
+        id: movieDetails.id,
+        title: movieDetails.title,
+        ticketPrice: TICKET_PRICE,
       },
-    });
+      roomInfo: {
+        id: roomConfig.roomId,
+        roomNumber: roomConfig.roomNumber,
+      },
+      // THIS NEEDS TO BE DYNAMIC AND CORRECTLY POPULATED
+      showDate: movieDetails.showtimeDate || "2025-06-01",
+      totalPrice: calculateTotalPrice(),
+    };
+
+    console.log("SeatSelectionPage: Navigating to /checkout with state:", JSON.stringify(navigationState, null, 2));
+    navigate("/checkout", { state: navigationState });
   };
+
+  console.log(
+    "SeatSelectionPage: FINAL VALUES BEFORE RENDER ---",
+    "isLoading:", isLoading,
+    "error:", error,
+    "roomConfig.rows:", roomConfig.rows,
+    "roomConfig.cols:", roomConfig.cols,
+    "allSeatStatusesForRoom length:", allSeatStatusesForRoom.length
+  );
 
   if (isLoading) {
     return (
@@ -337,15 +314,15 @@ export default function SeatSelectionPage() {
           </Typography>
         </Box>
 
-        {roomConfig.rows > 0 && roomConfig.cols > 0 ? (
-          <Room
-            key={`${roomConfig.roomId}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`} // Updated key
+        {(roomConfig.rows > 0 && roomConfig.cols > 0) ? (
+        <Room
+            key={`${roomConfig.roomId}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`}
             initialRows={roomConfig.rows}
             initialCols={roomConfig.cols}
             externallySetSeats={allSeatStatusesForRoom}
             onUserSeatToggle={handleSeatSelect}
             isEditable={false}
-          />
+        />
         ) : (
           !isLoading && (
             <Alert severity="info" sx={{ mt: 2 }}>
