@@ -1,39 +1,35 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  AppBar,
-  Box,
-  Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-  useMediaQuery,
-  Link as MuiLink,
-  Avatar
+  AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar,
+  Typography, useMediaQuery, Link as MuiLink, Avatar, Divider
 } from "@mui/material";
 import {
-  Movie as MovieIcon,
-  Search as SearchIcon,
-  AccountCircle,
-  Menu as MenuIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  ConfirmationNumber as TicketsIcon,
+  Movie as MovieIcon, Search as SearchIcon, AccountCircle, Menu as MenuIcon,
+  Settings as SettingsIcon, Logout as LogoutIcon, ConfirmationNumber as TicketsIcon,
+  MeetingRoom as MeetingRoomIcon,
+  People as PeopleIcon,
+  LocalActivity as OffersIcon,
+  CardMembership as MembershipIcon,
+  TheaterComedy as CinemasIcon,
+  AdminPanelSettings as AdminPanelIcon,
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function Header() { 
+export default function Header() {
   const theme = useTheme();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  // eslint-disable-next-line no-unused-vars
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const isAdmin = isAuthenticated && user && hasRole('admin');
+  const isClient = isAuthenticated && user && !isAdmin;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -73,9 +69,24 @@ export default function Header() {
       <MenuItem onClick={() => handleNavigate('/profile')}>
         <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> Profile Settings
       </MenuItem>
-      <MenuItem onClick={() => handleNavigate('/my-tickets')}>
-        <TicketsIcon sx={{ mr: 1 }} fontSize="small" /> My Tickets
-      </MenuItem>
+      {!isAdmin && (
+        <MenuItem onClick={() => handleNavigate('/my-tickets')}>
+          <TicketsIcon sx={{ mr: 1 }} fontSize="small" /> My Tickets
+        </MenuItem>
+      )}
+      {isAdmin && [
+          <Divider key="admin-divider-profile" />,
+          <MenuItem key="add-movie-profile" onClick={() => handleNavigate('/movies')}>
+            <MovieIcon sx={{ mr: 1 }} fontSize="small" /> Manage Movies
+          </MenuItem>,
+          <MenuItem key="manage-rooms-profile" onClick={() => handleNavigate('/admin/rooms')}>
+            <MeetingRoomIcon sx={{ mr: 1 }} fontSize="small" /> Manage Rooms
+          </MenuItem>,
+          <MenuItem key="manage-users-profile" onClick={() => handleNavigate('/admin/users')}>
+            <PeopleIcon sx={{ mr: 1 }} fontSize="small" /> Manage Users
+          </MenuItem>
+      ]}
+      <Divider />
       <MenuItem onClick={handleLogout}>
         <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> Sign Out
       </MenuItem>
@@ -92,30 +103,43 @@ export default function Header() {
       anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       open={Boolean(mobileMenuAnchorEl)}
       onClose={handleMenuClose}
-      sx={{ '& .MuiPaper-root': { width: '200px' } }}
+      sx={{ '& .MuiPaper-root': { width: '250px' } }}
     >
-      <MenuItem onClick={() => handleNavigate('/movies')}>Movies</MenuItem>
-      <Box sx={{ my: 1 }}><hr /></Box>
-      {isAuthenticated
-        ? [ 
-            <MenuItem key="profile" onClick={() => handleNavigate('/profile')}>
-              <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> Profile
-            </MenuItem>,
-            <MenuItem key="my-tickets" onClick={() => handleNavigate('/my-tickets')}>
-              <TicketsIcon sx={{ mr: 1 }} fontSize="small" /> My Tickets
-            </MenuItem>,
-            <MenuItem key="logout" onClick={handleLogout}>
-              <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> Sign Out
-            </MenuItem>,
-          ]
-        : (
-          <MenuItem>
-            <Button
-              color="primary"
-              variant="contained"
-              fullWidth
-              onClick={() => handleNavigate('/login')}
-            >
+      {(!isAdmin) && [
+        <MenuItem key="movies-mobile" onClick={() => handleNavigate('/movies')}> <MovieIcon sx={{mr:1}} fontSize="small"/> Movies</MenuItem>,
+      ]}
+
+      {isAdmin && [
+        <MenuItem key="add-movie-mobile" onClick={() => handleNavigate('/movies')}>
+          <MovieIcon sx={{ mr: 1 }} fontSize="small" /> Manage Movies
+        </MenuItem>,
+        <MenuItem key="manage-rooms-mobile" onClick={() => handleNavigate('/rooms')}>
+          <MeetingRoomIcon sx={{ mr: 1 }} fontSize="small" /> Manage Rooms
+        </MenuItem>,
+        <MenuItem key="manage-users-mobile" onClick={() => handleNavigate('/users')}>
+          <PeopleIcon sx={{ mr: 1 }} fontSize="small" /> Manage Users
+        </MenuItem>
+      ]}
+      
+      <Divider sx={{ my: 1 }} />
+
+      {isAuthenticated ? (
+        [
+          <MenuItem key="profile-mobile" onClick={() => handleNavigate('/profile')}>
+            <SettingsIcon sx={{ mr: 1 }} fontSize="small" /> Profile
+          </MenuItem>,
+          !isAdmin && (
+             <MenuItem key="my-tickets-mobile" onClick={() => handleNavigate('/my-tickets')}>
+                <TicketsIcon sx={{ mr: 1 }} fontSize="small" /> My Tickets
+             </MenuItem>
+          ),
+          <MenuItem key="logout-mobile" onClick={handleLogout}>
+            <LogoutIcon sx={{ mr: 1 }} fontSize="small" /> Sign Out
+          </MenuItem>
+        ].filter(Boolean)
+      ) : (
+          <MenuItem sx={{p:0}}>
+            <Button color="primary" variant="contained" fullWidth onClick={() => handleNavigate('/login')} sx={{m:1}}>
               Sign In
             </Button>
           </MenuItem>
@@ -127,33 +151,34 @@ export default function Header() {
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        color="transparent"
-        elevation={isScrolled ? 4 : 0}
-        sx={{
-          background: isScrolled
-            ? "rgba(20, 20, 20, 0.95)"
-            : "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)",
-          transition: "all 0.3s ease",
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}
-      >
+      <AppBar>
         <Toolbar>
-          <MuiLink component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', flexGrow: { xs: 1, md: 0 } }}>
-            <MovieIcon sx={{ color: "primary.main", fontSize: { xs: 30, md: 40 }, mr: 1 }} />
-            <Typography variant="h5" component="div" sx={{ fontWeight: 700, display: { xs: 'none', md: 'block' } }}>
+          <MuiLink component={RouterLink} to={isAdmin ? "/" : "/"} sx={{ display: 'flex', /* ... */ }}>
+            <MovieIcon sx={{ color: "primary.main", /* ... */ }} />
+            <Typography variant="h5" component="div" sx={{ fontWeight: 700, /* ... */ }}>
               CinePlex
             </Typography>
           </MuiLink>
 
           {!isMobile && (
-            <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: 'center' }}>
-              <Button component={RouterLink} to="/movies" color="inherit">Movies</Button>
+            <Box sx={{ display: "flex", gap: {xs: 1, sm: 2}, flexGrow: 1, justifyContent: 'center', px: 2 }}>
+              {(!isAuthenticated || isClient) && ( 
+                <>
+                  <Button component={RouterLink} to="/movies" color="inherit" sx={{fontSize: {xs: '0.8rem', sm: '0.9rem'}}}>Movies</Button>
+                </>
+              )}
+              {isAdmin && (
+                <>
+                  <Button component={RouterLink} to="/movies" color="secondary" sx={{fontSize: {xs: '0.8rem', sm: '0.9rem'}, fontWeight: 'bold'}}>Manage Movies</Button>
+                  <Button component={RouterLink} to="/rooms" color="secondary" sx={{fontSize: {xs: '0.8rem', sm: '0.9rem'}, fontWeight: 'bold'}}>Manage Rooms</Button>
+                  <Button component={RouterLink} to="/users" color="secondary" sx={{fontSize: {xs: '0.8rem', sm: '0.9rem'}, fontWeight: 'bold'}}>Manage Users</Button>
+                </>
+              )}
             </Box>
           )}
 
-          {isMobile && <Box sx={{ flexGrow: 1 }} />}
+          {isMobile && !isAdmin && <Box sx={{ flexGrow: 1 }} />} 
+          {isMobile && isAdmin && <Box sx={{ flexGrow: 1 }} />}
 
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton size="large" color="inherit" onClick={() => navigate('/search')}>
@@ -161,34 +186,23 @@ export default function Header() {
             </IconButton>
 
             {isMobile ? (
-              <IconButton
-                size="large"
-                edge="end"
-                color="inherit"
-                aria-label="open mobile menu"
-                onClick={handleMobileMenuOpen}
-              >
+              <IconButton size="large" edge="end" color="inherit" aria-label="open mobile menu" onClick={handleMobileMenuOpen}>
                 <MenuIcon />
               </IconButton>
-            ) : (
+            ) : ( 
               isAuthenticated ? (
                 <Button
                   color="inherit"
-                  onClick={handleProfileMenuOpen} 
+                  onClick={handleProfileMenuOpen}
                   aria-controls={menuId}
                   aria-haspopup="true"
                   startIcon={<Avatar sx={{ width: 28, height: 28, bgcolor: 'secondary.main', fontSize: '0.8rem' }}>{userName.charAt(0).toUpperCase()}</Avatar>}
-                  sx={{ textTransform: 'none', mx: 1 }}
+                  sx={{ textTransform: 'none', ml: 1, mr: -0.5 }} 
                 >
                   {userName}
                 </Button>
               ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => navigate('/login')}
-                  sx={{ ml: 2 }}
-                >
+                <Button variant="contained" color="primary" onClick={() => navigate('/login')} sx={{ ml: 2 }}>
                   Sign In
                 </Button>
               )

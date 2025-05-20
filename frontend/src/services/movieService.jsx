@@ -20,6 +20,22 @@ const getNowShowing = async () => {
   }
 }
 
+const getMovieById = async (movieId) => {
+  try {
+    const response = await apiClient.get(`/movies/${movieId}`); 
+    console.log(`movieService.getMovieById - Response for movie ${movieId}:`, response); 
+    if (response && response.data) {
+        return response.data;
+    } else {
+        console.warn(`movieService.getMovieById - No data in response for movie ${movieId}, status: ${response?.status}`);
+        return null; 
+    }
+  } catch (error) {
+    console.error(`movieService.getMovieById - Error fetching movie ${movieId}:`, error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to fetch movie ${movieId}: ${error.message}`);
+  }
+};
+
 const getMovieScreeningDetails = async (movieId) => {
   try {
     const response = await apiClient.get(`/movies/details/${movieId}`);
@@ -44,20 +60,49 @@ const getAvailableMovies = async (roomId = null) => {
   }
 };
 
-const createNewMovie = async (roomData) => {
+const addMovie = async (movieData) => {
   try {
-    const response = await apiClient.post('/newRoom', roomData);
+    const response = await apiClient.post('/movies/new', movieData); // Or /admin/movies
     return response.data;
   } catch (error) {
-    console.error("Error creating new room:", error.response?.data || error.message);
-    throw error.response?.data || new Error("Failed to create new room");
+    console.error("Error adding new movie:", error.response?.data || error.message);
+    const errData = error.response?.data || { message: "Failed to add new movie." };
+    if (typeof errData === 'string') { 
+        throw new Error(errData);
+    }
+    throw errData;
   }
 };
 
+const updateMovie = async (movieId, movieData) => {
+  try {
+    const response = await apiClient.put(`/movies/${movieId}`, movieData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating movie ${movieId}:`, error.response?.data || error.message);
+    const errData = error.response?.data || { message: `Failed to update movie ${movieId}: ${error.message}` };
+    if (typeof errData === 'string') {
+        throw new Error(errData);
+    }
+    throw errData;
+  }
+};
 
+const deleteMovie = async (movieId) => {
+  try {
+    const response = await apiClient.delete(`/movies/${movieId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting movie ${movieId}:`, error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to delete movie: ${error.message}`);
+  }
+};
 
 export default {
-    createNewMovie,
+    addMovie,
+    updateMovie,
+    deleteMovie,
+    getMovieById,
     getMovieScreeningDetails,
     getNowShowing,
     getAvailableMovies,

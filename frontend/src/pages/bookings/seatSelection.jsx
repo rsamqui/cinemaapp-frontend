@@ -1,31 +1,42 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
-  Container,
-  Typography,
-  Paper,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Alert,
-  Grid,
-  Divider,
+  Container, Typography, Paper, Box, Button, Chip,
+  CircularProgress, Alert, Grid, Divider,
+  FormControl, InputLabel, Select, MenuItem,
 } from "@mui/material";
 import Room from "../../components/Room";
 import { SEAT_STATUS } from "../../constants/seatConstants";
 import roomService from "../../services/roomService";
 
+const formatDateForAPI = (date) => {
+  return date.toISOString().split('T')[0];
+};
+
+const getNext7Days = () => {
+  const days = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    days.push({
+      value: formatDateForAPI(date), // YYYY-MM-DD
+      label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+    });
+  }
+  return days;
+};
+
 const DEFAULT_MOVIE_DETAILS = {
   id: null,
   title: "Movie Loading...",
-  showtimeDate: "N/A", // Added for placeholder
-  showtimeTime: "N/A", // Added for placeholder
+  ticketPrice: 230,
+  showtime: "N/A",
   screen: "N/A",
 };
 
 export default function SeatSelectionPage() {
-  const { screeningId } = useParams(); // This is the identifier from the URL
+  const { roomId } = useParams(); // This is used as roomId
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,52 +44,44 @@ export default function SeatSelectionPage() {
     location.state?.movieInfo || DEFAULT_MOVIE_DETAILS
   );
   const [roomConfig, setRoomConfig] = useState({
-    rows: 0,
-    cols: 0,
-    roomNumber: null,
-    roomId: null, // This will be the DB ID of the room, same as screeningId in this simplified model
-    movieId: null,
+    rows: 0, cols: 0, roomNumber: null, roomId: null, movieId: null,
   });
   const [initialSeatStatuses, setInitialSeatStatuses] = useState([]);
   const [userSelectedSeatIds, setUserSelectedSeatIds] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  console.log(
-    "SeatSelectionPage - Initial location.state.movieInfo:",
-    JSON.stringify(location.state?.movieInfo)
-  );
+  const availableDates = useMemo(() => getNext7Days(), []);
+  const [selectedShowDate, setSelectedShowDate] = useState(availableDates[0]?.value || formatDateForAPI(new Date()));
 
-  const TICKET_PRICE = 230;
 
   useEffect(() => {
-    console.log(
-      "SeatSelectionPage: movieDetails state updated:",
-      JSON.stringify(movieDetails)
-    );
-  }, [movieDetails]);
+    if (location.state?.movieInfo) {
+        setMovieDetails(prev => ({
+            ...DEFAULT_MOVIE_DETAILS, 
+            ...prev, 
+            ...location.state.movieInfo, 
+            showtimeDate: location.state.movieInfo.showtimeDate || selectedShowDate
+        }));
+    } else {
+        setMovieDetails(prev => ({...prev, showtimeDate: selectedShowDate}));
+    }
+  }, [location.state?.movieInfo, selectedShowDate]);
 
-  useEffect(() => {
-    console.log(
-      "SeatSelectionPage: roomConfig state updated:",
-      JSON.stringify(roomConfig)
-    );
-  }, [roomConfig]);
+
+  const TICKET_PRICE = movieDetails?.ticketPrice || DEFAULT_MOVIE_DETAILS.ticketPrice;
 
   const loadLayout = useCallback(async () => {
-    if (!screeningId) {
-      setError("Screening/Room ID information is missing in URL.");
-      setIsLoading(false);
-      return;
-    }
-    console.log(
-      "SeatSelectionPage (loadLayout): Executing for screeningId (used as roomId):",
-      screeningId
-    );
+  if (!roomId || !selectedShowDate) { 
+    setError("Room ID or Show Date is missing.");
+    setIsLoading(false);
+    return;
+  }
+    console.log(`SeatSelectionPage (loadLayout): Executing for roomId: ${roomId}, Date: ${selectedShowDate}`);
     setIsLoading(true);
     setError(null);
     try {
-      const responseArray = await roomService.getRoomById(screeningId); // screeningId is the room's ID here
+      const responseArray = await roomService.getRoomById(roomId, selectedShowDate);
       console.log(
         "SeatSelectionPage (loadLayout): Fetched API responseArray:",
         JSON.stringify(responseArray)
@@ -86,60 +89,34 @@ export default function SeatSelectionPage() {
 
       if (Array.isArray(responseArray) && responseArray.length > 0) {
         const roomData = responseArray[0];
-        console.log(
-          "SeatSelectionPage (loadLayout): Extracted roomData:",
-          JSON.stringify(roomData)
-        );
+        setRoomConfig({
+          rows: roomData.totalRows || 0, cols: roomData.totalColumns || 0,
+          roomNumber: roomData.roomNumber || "N/A", roomId: roomData.id,
+          movieId: roomData.movieId,
+        });
+        // seatLayout from backend should ideally reflect statuses for selectedShowDate
+        setInitialSeatStatuses((roomData.seatLayout || []).map(seat => ({...seat, dbId: seat.dbId || seat.id})));
+        setUserSelectedSeatIds(new Set()); // Reset selections when date or layout changes
 
-        if (roomData && roomData.id) {
-          setRoomConfig({
-            rows: roomData.totalRows || 0,
-            cols: roomData.totalColumns || 0,
-            roomNumber: roomData.roomNumber || "N/A",
-            roomId: roomData.id, // This is the room's DB ID
-            movieId: roomData.movieId, // Movie ID associated with this room
-          });
-          // Ensure seatLayout has dbId for each seat
-          setInitialSeatStatuses(
-            (roomData.seatLayout || []).map(seat => ({...seat, dbId: seat.dbId || seat.id}))
-          );
-          setUserSelectedSeatIds(new Set());
-
-          // Update movieDetails state. Prioritize data linked directly to the room/screening.
-          setMovieDetails(prev => {
-            const baseDetails = location.state?.movieInfo && location.state.movieInfo.id
-                                ? location.state.movieInfo
-                                : (prev && prev.id ? prev : DEFAULT_MOVIE_DETAILS);
-            return {
-              ...baseDetails,
-              id: roomData.movieId || baseDetails.id,
-              title: roomData.movieTitle || baseDetails.title,
-              ticketPrice: 230,
-              screen: roomData.roomNumber || baseDetails.screen,
-              // showtimeDate and showtimeTime should ideally come from roomData if it's specific
-              // For now, relying on what might have been passed from MovieDetailPage
-              showtimeDate: baseDetails.showtimeDate,
-              showtimeTime: baseDetails.showtimeTime,
-            };
-          });
-          console.log(
-            "SeatSelectionPage (loadLayout): setState calls made."
-          );
-        } else {
-          throw new Error("Extracted room data is invalid (e.g., missing ID).");
-        }
-      } else {
-        throw new Error("Room data not found or API returned an empty array.");
-      }
+        setMovieDetails(prev => ({
+          ...DEFAULT_MOVIE_DETAILS,
+          ...(location.state?.movieInfo && location.state.movieInfo.id ? location.state.movieInfo : (prev && prev.id ? prev : {})),
+          id: roomData.movieId || location.state?.movieInfo?.id || DEFAULT_MOVIE_DETAILS.id,
+          title: roomData.movieTitle || location.state?.movieInfo?.title || DEFAULT_MOVIE_DETAILS.title,
+          ticketPrice: TICKET_PRICE,
+          screen: roomData.roomNumber || prev?.screen,
+          showtimeDate: selectedShowDate, // Update movieDetails with the selected date
+          showtimeTime: prev?.showtimeTime || DEFAULT_MOVIE_DETAILS.showtimeTime, // Keep existing time or default
+        }));
+      } else { throw new Error("Room data not found or invalid response."); }
     } catch (err) {
-      console.error("SeatSelectionPage (loadLayout): Failed to load room layout:",err);
-      setError( err.message || "Sorry, we couldn't load the seat map. Please try again later.");
+      console.error("SeatSelectionPage (loadLayout): Failed to load room layout:", err);
+      setError(err.message || "Sorry, we couldn't load the seat map.");
+      // Reset states on error
       setRoomConfig({ rows: 0, cols: 0, roomNumber: null, roomId: null, movieId: null });
       setInitialSeatStatuses([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [screeningId, location.state?.movieInfo]); // Added location.state.movieInfo dependency
+    } finally { setIsLoading(false); }
+  }, [roomId, selectedShowDate, location.state?.movieInfo, TICKET_PRICE]);
 
   useEffect(() => {
     loadLayout();
@@ -208,7 +185,6 @@ export default function SeatSelectionPage() {
 
   const calculateTotalPrice = () => userSelectedSeatIds.size * TICKET_PRICE;
 
-  // RENAMED THIS FUNCTION
   const handleProceedToCheckout = () => {
     if (userSelectedSeatIds.size === 0) {
       alert("Please select at least one seat.");
@@ -222,39 +198,30 @@ export default function SeatSelectionPage() {
     if (
       seatsToBook.some((seat) => seat.dbId === null || seat.dbId === undefined)
     ) {
-      alert("Error: Some selected seats are missing database IDs. Cannot proceed.");
-      console.error("Selected seats with missing dbId:", seatsToBook.filter((s) => !s.dbId));
+      alert(
+        "Error: Some selected seats are missing database IDs. Cannot proceed."
+      );
+      console.error(
+        "Selected seats with missing dbId:",
+        seatsToBook.filter((s) => !s.dbId)
+      );
       return;
     }
 
     const navigationState = {
       selectedSeats: seatsToBook,
       movieDetails: {
-        id: movieDetails.id,
-        title: movieDetails.title,
-        ticketPrice: TICKET_PRICE,
+        id: movieDetails.id, title: movieDetails.title, ticketPrice: TICKET_PRICE,
       },
       roomInfo: {
-        id: roomConfig.roomId,
-        roomNumber: roomConfig.roomNumber,
+        id: roomConfig.roomId, roomNumber: roomConfig.roomNumber,
       },
-      // THIS NEEDS TO BE DYNAMIC AND CORRECTLY POPULATED
-      showDate: movieDetails.showtimeDate || "2025-06-01",
+      showDate: selectedShowDate,
       totalPrice: calculateTotalPrice(),
     };
-
     console.log("SeatSelectionPage: Navigating to /checkout with state:", JSON.stringify(navigationState, null, 2));
     navigate("/checkout", { state: navigationState });
   };
-
-  console.log(
-    "SeatSelectionPage: FINAL VALUES BEFORE RENDER ---",
-    "isLoading:", isLoading,
-    "error:", error,
-    "roomConfig.rows:", roomConfig.rows,
-    "roomConfig.cols:", roomConfig.cols,
-    "allSeatStatusesForRoom length:", allSeatStatusesForRoom.length
-  );
 
   if (isLoading) {
     return (
@@ -292,51 +259,60 @@ export default function SeatSelectionPage() {
           Select Your Seats
         </Typography>
 
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            backgroundColor: "rgba(0,0,0,0.05)",
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="h6">
-            {movieDetails.title || "Movie Title"}
-          </Typography>
+        {/* Movie and Showtime Info Box */}
+        <Box sx={{ mb: 3, p: 2, backgroundColor: "rgba(0,0,0,0.05)", borderRadius: 1 }}>
+          <Typography variant="h6">{movieDetails.title || "Movie Title"}</Typography>
+          {/* Date Selector */}
+          <FormControl fullWidth margin="normal" sx={{my:2, maxWidth: {sm: '300px'} }}>
+            <InputLabel id="show-date-select-label">Show Date</InputLabel>
+            <Select
+              labelId="show-date-select-label"
+              value={selectedShowDate}
+              label="Show Date"
+              onChange={(e) => {
+                setSelectedShowDate(e.target.value);
+                setUserSelectedSeatIds(new Set()); // Reset selected seats when date changes
+              }}
+            >
+              {availableDates.map(dateOpt => (
+                <MenuItem key={dateOpt.value} value={dateOpt.value}>
+                  {dateOpt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Typography variant="subtitle1" color="text.secondary">
-            {/* This should display the actual show date and time */}
-            Date:{" "}
-            {movieDetails.showtimeDate
-              ? new Date(movieDetails.showtimeDate).toLocaleDateString()
-              : "Select Date"}{" "}
-            - Time: {movieDetails.showtimeTime || "Select Time"} - Room:{" "}
-            {roomConfig.roomNumber || "..."}
+            Time: {movieDetails.showtimeTime || "07:00 PM"} - Room: {roomConfig.roomNumber || "..."}
           </Typography>
         </Box>
 
-        {(roomConfig.rows > 0 && roomConfig.cols > 0) ? (
-        <Room
-            key={`${roomConfig.roomId}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`}
+        {/* Conditional Rendering for Room based on loading state for seat map */}
+        {isLoading && roomConfig.rows > 0 ? ( // Show loader if rows are set but still loading (e.g. date change)
+             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                <CircularProgress /> <Typography sx={{ ml: 2 }}>Loading Seat Map for {new Date(selectedShowDate + 'T00:00:00').toLocaleDateString()}...</Typography>
+            </Box>
+        ) : error && roomConfig.rows > 0 ? ( // Show error if rows are set but loading failed
+             <Container sx={{ py: 2, textAlign: "center" }}>
+                <Alert severity="error" sx={{ justifyContent: "center" }}>{error}</Alert>
+                <Button variant="outlined" onClick={loadLayout} sx={{ mt: 2 }}> Try Again </Button>
+            </Container>
+        ) : roomConfig.rows > 0 && roomConfig.cols > 0 ? (
+          <Room
+            key={`${roomConfig.roomId}-${selectedShowDate}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`} // Add selectedShowDate to key
             initialRows={roomConfig.rows}
             initialCols={roomConfig.cols}
             externallySetSeats={allSeatStatusesForRoom}
             onUserSeatToggle={handleSeatSelect}
             isEditable={false}
-        />
+          />
         ) : (
-          !isLoading && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Seat map is currently unavailable or room dimensions are not set.
-            </Alert>
-          )
+          !isLoading && <Alert severity="info" sx={{mt: 2}}>Seat map is currently unavailable or room dimensions are not set.</Alert>
         )}
 
-        <Divider sx={{ my: 4 }} />
-
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Your Selection
-          </Typography>
+        {/* ... (Rest of JSX: Divider, Your Selection, Total Price, Proceed to Checkout Button) ... */}
+         <Divider sx={{ my: 4 }} />
+         <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>Your Selection</Typography>
           {selectedSeatObjectsForDisplay.length > 0 ? (
             <Grid container spacing={1} sx={{ mb: 2 }}>
               {selectedSeatObjectsForDisplay.map((seat) => (
@@ -344,35 +320,18 @@ export default function SeatSelectionPage() {
                   <Chip
                     label={seat.id}
                     color="primary"
-                    onDelete={() =>
-                      handleSeatSelect({ id: seat.id }, SEAT_STATUS.AVAILABLE)
-                    }
+                    onDelete={() => handleSeatSelect({ id: seat.id }, SEAT_STATUS.AVAILABLE)}
                   />
                 </Grid>
               ))}
             </Grid>
-          ) : (
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Please click on an available seat to select it.
-            </Typography>
-          )}
+          ) : ( <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>Please click on an available seat to select it.</Typography> )}
           <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-            Total Price:{" "}
-            {new Intl.NumberFormat("es-NI", {
-              style: "currency",
-              currency: "NIO",
-            }).format(calculateTotalPrice())}
+            Total Price:{" "} {new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO" }).format(calculateTotalPrice())}
           </Typography>
         </Box>
-
         <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={handleProceedToCheckout}
-            disabled={selectedSeatObjectsForDisplay.length === 0}
-          >
+          <Button variant="contained" color="primary" size="large" onClick={handleProceedToCheckout} disabled={selectedSeatObjectsForDisplay.length === 0 || isLoading}>
             Proceed to Checkout
           </Button>
         </Box>

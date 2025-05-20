@@ -95,7 +95,7 @@ export default function CheckoutPage() {
       console.log("CheckoutPage: Booking successful, response:", bookingConfirmation);
       handleClosePaymentModal();
       if (bookingConfirmation && bookingConfirmation.bookingId) {
-        navigate(`/ticket/${bookingConfirmation.bookingId}`, { replace: true });
+        navigate(`/bookings/ticket/${bookingConfirmation.bookingId}`, { replace: true });
       } else {
         console.error("CheckoutPage: Booking ID not found in confirmation response.", bookingConfirmation);
         setPaymentError("Booking confirmed, but there was an issue retrieving your ticket ID. Please contact support.");

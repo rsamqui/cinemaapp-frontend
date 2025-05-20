@@ -10,24 +10,17 @@ const getRooms = async () => {
   }
 }
 
-const getRoomById = async (roomId) => {
+const getRoomById = async (roomId, showDate = null) => {
   try {
-    console.log(`roomService: Calling GET /rooms with params: { id: ${roomId} }`);
-    const response = await apiClient.get('/rooms', {
-      params: {
-        id: roomId,
-      },
-    });
-    console.log(`roomService: Response status for room ${roomId}: ${response.status}`);
-    console.log(`roomService: Response data for room ${roomId}:`, JSON.stringify(response.data, null, 2));
+    const params = { id: roomId };
+    if (showDate) {
+      params.show_date = showDate;
+    }
+    const response = await apiClient.get('/rooms', { params });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching room with id=${roomId}:`, error.response?.data || error.message);
-    const errData = error.response?.data || { message: `Failed to fetch room ${roomId}` };
-    if (typeof errData === 'string') {
-        throw new Error(errData);
-    }
-    throw errData;
+    console.error(`Error fetching room ${roomId} for date ${showDate}:`, error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to fetch room data: ${error.message}`);
   }
 };
 
