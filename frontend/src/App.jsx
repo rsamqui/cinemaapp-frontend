@@ -3,17 +3,17 @@ import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "./theme";
 import ProtectedRoute from './constants/protectedRoute';
 import MainLayout from './layouts/MainLayout';
-import Home from './pages/Home';
-import Login from './pages/user/Login';
-import Register from './pages/user/Register';
-import AddMoviePage from './pages/movies/addMovie';
-import SeatSelectionPage from './pages/bookings/seatSelection';
-import CreateRoomPage from './pages/rooms/createRoom';
-import EditRoomPage from './pages/rooms/editRoom';
-import ListRoomsPage from './pages/movies/listMovies';
-import MovieDetailPage from './pages/movies/movieDetails';
-import CheckoutPage from './pages/bookings/checkoutPage';
-import TicketPage from './pages/bookings/ticketPage';
+import Home from './pages/Home.jsx';
+import Login from './pages/user/login.jsx';
+import Register from './pages/user/register.jsx';
+import AddMoviePage from './pages/movies/addMovie.jsx';
+import SeatSelectionPage from './pages/bookings/seatSelection.jsx';
+import CreateRoomPage from './pages/rooms/createRoom.jsx';
+import EditRoomPage from './pages/rooms/editRoom.jsx';
+import ListRoomsPage from './pages/movies/listMovies.jsx';
+import MovieDetailPage from './pages/movies/movieDetails.jsx';
+import CheckoutPage from './pages/bookings/checkoutPage.jsx';
+import TicketPage from './pages/bookings/ticketPage.jsx';
 import EditMoviePage from './pages/movies/editMovie.jsx';
 import ListRoomsAdminPage from './pages/rooms/listRooms.jsx';
 import ProfilePage from './pages/user/profilePage.jsx';
@@ -53,7 +53,7 @@ function App() {
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/bookings/ticket/:bookingId" element={<TicketPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/my-tickets" element={<MyTicketsPage />} />
+              <Route path="/myickets" element={<MyTicketsPage />} />
             </Route>
             
           </Route>

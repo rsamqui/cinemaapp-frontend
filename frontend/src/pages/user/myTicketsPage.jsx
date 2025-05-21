@@ -7,15 +7,16 @@ import {
   Divider, List, ListItem, ListItemIcon, ListItemText,
 } from '@mui/material';
 import {
-    ConfirmationNumber as TicketIcon, 
     Movie as MovieIcon,
     Theaters as TheatersIcon,
     EventSeat as EventSeatIcon,
     CalendarToday as CalendarIcon,
     AttachMoney as AttachMoneyIcon,
-    ArrowForwardIos as ArrowForwardIosIcon, 
-    SentimentVeryDissatisfied as SadIcon, 
-    ArrowBack as ArrowBackIcon, 
+    ArrowForwardIos as ArrowForwardIosIcon,
+    SentimentVeryDissatisfied as SadIcon,
+    ArrowBack as ArrowBackIcon,
+    ErrorOutline as ErrorIcon, // For booking status chip if needed
+    ConfirmationNumber as ConfirmationNumberIcon, // <<< ENSURE THIS IS IMPORTED
 } from '@mui/icons-material';
 import bookingService from '../../services/bookingService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,20 +26,24 @@ export default function MyTicketsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const loadMyBookings = useCallback(async () => {
-    if (!isAuthenticated) {
-        setError("Please log in to see your bookings.");
-        setIsLoading(false);
-        navigate('/login', { replace: true, state: { from: location } });
+    if (!isAuthenticated || !user || !user.id) {
+        if (isAuthenticated && !user) {
+             console.log("MyTicketsPage: User authenticated but user object not yet available. Waiting...");
+        } else if (!isAuthenticated) {
+            setError("Please log in to see your bookings.");
+            setIsLoading(false);
+        }
         return;
     }
+
     setIsLoading(true);
     setError(null);
     try {
-      const data = await bookingService.getMyBookings();
-      console.log("MyTicketsPage: Fetched bookings:", data);
+      const data = await bookingService.getMyBookings(user.id);
+      console.log("MyTicketsPage: Fetched bookings for user " + user.id + ":", JSON.stringify(data, null, 2));
       setBookings(data || []);
     } catch (err) {
       console.error("MyTicketsPage: Failed to fetch bookings:", err);
@@ -47,11 +52,17 @@ export default function MyTicketsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
-    loadMyBookings();
-  }, [loadMyBookings]);
+    if (user && user.id) {
+        loadMyBookings();
+    } else if (!isAuthenticated && !isLoading) {
+        setError("Please log in to view your bookings.");
+        setIsLoading(false);
+    }
+  }, [user, isAuthenticated, loadMyBookings, isLoading]);
+
 
   const fixedShowtime = "07:00 PM";
 
@@ -79,7 +90,7 @@ export default function MyTicketsPage() {
         My Bookings
       </Typography>
 
-      {!isAuthenticated && ( 
+      {!isAuthenticated && (
           <Alert severity="warning">Please log in to view your bookings.</Alert>
       )}
 
@@ -101,15 +112,15 @@ export default function MyTicketsPage() {
                 {booking.moviePosterUrl && (
                     <CardMedia
                         component="img"
-                        sx={{ width: {xs: '100%', sm: 160}, height: {xs: 240, sm: 'auto'}, objectFit: 'cover' }}
+                        sx={{ width: {xs: '100%', sm: 180}, height: {xs: 270, sm: 'auto'}, objectFit: 'cover' }}
                         image={booking.moviePosterUrl}
                         alt={booking.movieTitle}
                         onError={(e) => { e.target.style.display='none';}}
                     />
                 )}
                 {!booking.moviePosterUrl && (
-                     <Box sx={{width: {xs: '100%', sm: 160}, height: {xs: 240, sm: 'auto'}, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.200'}}>
-                        <MovieIcon sx={{fontSize: 50, color: 'grey.400'}}/>
+                     <Box sx={{width: {xs: '100%', sm: 180}, height: {xs: 270, sm: 'auto'}, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.200'}}>
+                        <MovieIcon sx={{fontSize: 60, color: 'grey.400'}}/>
                     </Box>
                 )}
                 <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
@@ -120,9 +131,13 @@ export default function MyTicketsPage() {
                         <List dense disablePadding sx={{mb:1, fontSize: '0.9rem'}}>
                             <ListItem disablePadding sx={{py:0.25}}>
                                 <ListItemIcon sx={{minWidth: 30}}><CalendarIcon fontSize="inherit" /></ListItemIcon>
-                                <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Show Date" secondary={booking.showDate ? new Date(booking.showDate + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + ` - ${fixedShowtime}` : 'N/A'} />
+                                <ListItemText 
+                                    secondaryTypographyProps={{fontSize: '0.85rem'}} 
+                                    primary="Show Date" 
+                                    secondary={booking.showDate ? new Date(booking.showDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) + ` - ${fixedShowtime}` : 'N/A'} 
+                                />
                             </ListItem>
-                            <ListItem disablePadding sx={{py:0.25}}>
+                             <ListItem disablePadding sx={{py:0.25}}>
                                 <ListItemIcon sx={{minWidth: 30}}><TheatersIcon fontSize="inherit" /></ListItemIcon>
                                 <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Room" secondary={booking.roomNumber || 'N/A'} />
                             </ListItem>
@@ -130,23 +145,33 @@ export default function MyTicketsPage() {
                                 <ListItemIcon sx={{minWidth: 30}}><EventSeatIcon fontSize="inherit" /></ListItemIcon>
                                 <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Seats" secondary={booking.bookedSeatsString || 'N/A'} />
                             </ListItem>
-                            <ListItem disablePadding sx={{py:0.25}}>
-                                <ListItemIcon sx={{minWidth: 30}}><ConfirmationNumberIcon fontSize="inherit" /></ListItemIcon>
+                             <ListItem disablePadding sx={{py:0.25}}>
+                                <ListItemIcon sx={{minWidth: 30}}>
+                                    <ConfirmationNumberIcon fontSize="inherit" /> {/* Using the imported icon */}
+                                </ListItemIcon>
                                 <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Booking ID" secondary={booking.bookingId} />
                             </ListItem>
                             <ListItem disablePadding sx={{py:0.25}}>
                                 <ListItemIcon sx={{minWidth: 30}}><AttachMoneyIcon fontSize="inherit" /></ListItemIcon>
-                                <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Total Paid" secondary={booking.totalPrice !== undefined ? new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(booking.totalPrice) : "N/A"} />
+                                <ListItemText 
+                                    secondaryTypographyProps={{fontSize: '0.85rem'}} 
+                                    primary="Total Paid" 
+                                    secondary={booking.totalPrice !== undefined ? new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(parseFloat(booking.totalPrice)) : "N/A"} 
+                                />
                             </ListItem>
+                             {booking.bookingStatus && (
+                                <ListItem disablePadding sx={{py:0.25}}>
+                                    <ListItemIcon sx={{minWidth: 30}}>
+                                        {booking.bookingStatus === 'confirmed' ? <Chip size="small" label=" " color="success" sx={{width: 10, height: 10, borderRadius: '50%', p:0, minWidth:10}} /> : <ErrorIcon fontSize="inherit" color="warning"/>}
+                                    </ListItemIcon>
+                                    <ListItemText 
+                                        secondaryTypographyProps={{fontSize: '0.85rem', textTransform: 'capitalize'}} 
+                                        primary="Status" 
+                                        secondary={booking.bookingStatus.replace('_', ' ')} 
+                                    />
+                                </ListItem>
+                             )}
                         </List>
-                        {booking.bookingStatus && (
-                        <Chip
-                            label={booking.bookingStatus.replace('_', ' ')}
-                            size="small"
-                            color={booking.bookingStatus === 'confirmed' ? 'success' : booking.bookingStatus.includes('cancel') ? 'error' : 'default' }
-                            sx={{textTransform: 'capitalize', fontWeight: 'medium'}}
-                        />
-                        )}
                     </CardContent>
                     <Divider />
                     <CardActions sx={{ justifyContent: 'flex-end', p:1.5 }}>

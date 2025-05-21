@@ -29,11 +29,14 @@ const getBookingDetailsForTicket = async (bookingId) => {
 
 const getMyBookings = async (userId) => {
   try {
-    const response = await apiClient.get(`/bookings/ticket/${userId}`);
-    return response.data || [];
+    if (!userId) {
+      console.warn("getMyBookings: userId is missing.");
+    }
+    const response = await apiClient.get(`/bookings/user/${userId}`);
+    return response.data || []; 
   } catch (error) {
-    console.error("Error fetching user's tickets:", error.response?.data || error.message);
-    throw error.response?.data || new Error("Failed to fetch your bookings.");
+    console.error(`Error fetching bookings for user ${userId}:`, error.response?.data || error.message);
+    throw error.response?.data || new Error(`Failed to fetch bookings for user ${userId}.`);
   }
 };
 
