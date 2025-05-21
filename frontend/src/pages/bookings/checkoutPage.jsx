@@ -18,13 +18,12 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
-  // Data passed from SeatSelectionPage
   const {
-    selectedSeats, // Expected: Array of { id: 'A1' (displayId), dbId: 101 (database PK) }
-    movieDetails,  // Expected: { id (movieId_from_db), title, ticketPrice }
-    roomInfo,      // Expected: { id (roomId_from_db), roomNumber }
-    showDate,      // Expected: String like 'YYYY-MM-DD'
-    totalPrice,    // This is what SeatSelectionPage sends
+    selectedSeats,
+    movieDetails,
+    roomInfo,
+    showDate,
+    totalPrice,
   } = location.state || {};
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
@@ -36,7 +35,6 @@ export default function CheckoutPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated || !user) {
       console.log("CheckoutPage: User not authenticated, redirecting to login.");
@@ -171,6 +169,13 @@ export default function CheckoutPage() {
               Enter Card Details
             </Button>
              {paymentError && <Alert severity="error" sx={{mt:2, width: '100%'}}>{paymentError}</Alert>}
+             <Button
+              variant="contained" color="primary" size="large" fullWidth
+              onClick={navigate.bind(null, '/bookings/' + movieDetails.id)}
+              sx={{ py: 1.5, fontSize: '1.1rem', mt:1 }}
+            >
+              Cancel
+            </Button>
           </Grid>
         </Grid>
       </Paper>

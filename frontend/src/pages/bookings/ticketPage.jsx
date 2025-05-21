@@ -1,4 +1,3 @@
-// src/pages/TicketPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import {
@@ -15,10 +14,8 @@ import {
   ListItemIcon,
   Divider,
   Button,
-  // IconButton, // Not used in this version unless you add more actions
 } from "@mui/material";
-// Corrected import for qrcode.react using namespace import
-import QRCode from "react-qr-code"; // <<< CHANGED IMPORT
+import QRCode from "react-qr-code";
 import {
   Movie as MovieIcon,
   Theaters as TheatersIcon,
@@ -32,30 +29,8 @@ import {
 } from "@mui/icons-material";
 import bookingService from "../../services/bookingService";
 
-// Mock function (keep or replace with actual service call)
-// eslint-disable-next-line no-unused-vars
-const fetchMockTicketDetails = async (bookingId) => {
-  console.log("Fetching mock ticket details for booking ID:", bookingId);
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  if (bookingId === "undefined" || !bookingId)
-    throw new Error("Invalid Booking ID for mock.");
-  return {
-    bookingId: bookingId,
-    bookDate: new Date().toISOString(),
-    totalPrice: 460,
-    userName: "Ricardo Sam Qui",
-    movieTitle: "Cosmic Adventure X",
-    movieDuration: "145 min",
-    roomNumber: 101,
-    seats: [{ id: "C7" }, { id: "C8" }],
-    qrCodeData: `https://yourcinema.com/verify-ticket?bookingId=${bookingId}`,
-    bookingTransactionTime: new Date().toISOString(),
-  };
-};
-
 export default function TicketPage() {
   const { bookingId } = useParams();
-  // const navigate = useNavigate(); // Not used in this version, uncomment if needed
   const [ticketDetails, setTicketDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,7 +46,6 @@ export default function TicketPage() {
       setError(null);
       try {
         const data = await bookingService.getBookingDetailsForTicket(bookingId);
-        // const data = await fetchMockTicketDetails(bookingId); // Use mock if service isn't ready
         if (!data) {
           throw new Error(
             "Ticket details not found or invalid response from API."
@@ -148,181 +122,242 @@ export default function TicketPage() {
     );
   }
 
-  const fixedShowtime = "07:00 PM"; // Example, make this dynamic if needed
-  const displayShowDateTime = ticketDetails.showDate
-    ? `${new Date(ticketDetails.showDate + "T00:00:00").toLocaleDateString(
-        undefined,
-        { weekday: "long", year: "numeric", month: "long", day: "numeric" }
-      )} - ${fixedShowtime}`
-    : "Date/Time N/A";
+  const fixedShowtime = "07:00 PM";
+  // Corrected template literal for displayShowDateTime
+  const displayShowDateTime = `${ticketDetails.showDate} - ${fixedShowtime}`;
 
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 2, md: 4 } }}>
-      <Paper
-        elevation={6}
-        sx={{
-          p: { xs: 2, sm: 3, md: 4 },
-          borderRadius: "8px",
-          backgroundColor: "background.paper",
-        }}
-      >
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <ConfirmationNumberIcon
-            sx={{ fontSize: 60, color: "primary.main", mb: 1 }}
-          />
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ fontWeight: "bold", color: "primary.dark" }}
-          >
-            Your E-Ticket
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
-            Booking ID: <strong>{ticketDetails.bookingId}</strong>
-          </Typography>
-        </Box>
-        <Divider sx={{ my: 2.5 }} />
+    <>
+      <style type="text/css" media="print">
+        {`
+          @media print {
+            body, html {
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              background-color: #fff; /* Ensure background is white for printing */
+            }
+            body * {
+              visibility: hidden;
+              box-shadow: none !important;
+              border: none !important; /* Reset borders for non-printed items */
+            }
+            #printable-ticket, #printable-ticket * {
+              visibility: visible;
+            }
+            #printable-ticket {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%; /* Make ticket take full width of printable area */
+              margin: 0;
+              padding: 20px; /* Add some padding for the printed ticket */
+              box-shadow: none !important;
+              border: 1px solid #555 !important; /* Optional: Add a border to the ticket when printed */
+              border-radius: 0 !important; /* Optional: Remove border-radius for print */
+              background-color: #fff !important; /* Ensure ticket background is white */
+              page-break-inside: avoid; /* Try to avoid breaking the ticket across pages */
+            }
+            #printable-ticket .MuiPaper-root { /* Target MUI paper specifically if needed */
+                background-color: #fff !important;
+                color: #000 !important;
+            }
+            #printable-ticket .MuiTypography-root,
+            #printable-ticket .MuiListItemText-primary,
+            #printable-ticket .MuiListItemText-secondary,
+            #printable-ticket .MuiListItemIcon-root .MuiSvgIcon-root {
+                color: #000 !important; /* Ensure text and icons are black for printing */
+                -webkit-print-color-adjust: exact; /* Ensure colors print correctly in WebKit browsers */
+                color-adjust: exact; /* Standard property for color adjustment */
+            }
+            #printable-ticket .MuiDivider-root {
+                border-color: #000 !important;
+            }
+            #printable-ticket .qr-code-container { /* Style the QR code container for print */
+                border: 1px solid #000 !important; /* Ensure QR code border is visible if it's on a Box */
+                padding: 8px !important; /* Adjust if you have a specific container for QR */
+                background-color: #fff !important;
+            }
+            #printable-ticket .qr-code-container svg { /* Ensure QR code SVG itself is styled if needed */
+                display: block;
+                margin: auto;
+            }
+            .no-print {
+              display: none !important;
+            }
+          }
+        `}
+      </style>
 
-        <Grid container spacing={2.5}>
-          <Grid item xs={12} md={7}>
+      <Container maxWidth="sm" sx={{ py: { xs: 2, md: 4 } }}>
+        <Paper
+          id="printable-ticket"
+          elevation={6}
+          sx={{
+            p: { xs: 2, sm: 3, md: 4 },
+            borderRadius: "8px",
+            backgroundColor: "background.paper",
+          }}
+        >
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <ConfirmationNumberIcon
+              sx={{ fontSize: 60, color: "primary.main", mb: 1 }}
+            />
             <Typography
-              variant="h5"
-              gutterBottom
-              sx={{ fontWeight: 500, color: "text.primary", mb: 1.5 }}
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: "bold", color: "primary.dark" }}
             >
-              {ticketDetails.movieTitle || "Movie Title N/A"}
+              Your Cinplex E-Ticket
             </Typography>
-            <List dense disablePadding>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <PersonIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Booked For"
-                  secondary={ticketDetails.userName || "N/A"}
-                  primaryTypographyProps={{ fontWeight: "medium" }}
-                />
-              </ListItem>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <CalendarIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Show Date & Time"
-                  secondary={displayShowDateTime}
-                  primaryTypographyProps={{ fontWeight: "medium" }}
-                />
-              </ListItem>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <TheatersIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Room"
-                  secondary={ticketDetails.roomNumber || "N/A"}
-                  primaryTypographyProps={{ fontWeight: "medium" }}
-                />
-              </ListItem>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <EventSeatIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Seats"
-                  secondary={
-                    ticketDetails.seats && ticketDetails.seats.length > 0
-                      ? ticketDetails.seats.map((s) => s.id).join(", ")
-                      : "N/A"
-                  }
-                  primaryTypographyProps={{ fontWeight: "medium" }}
-                />
-              </ListItem>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <AttachMoneyIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Total Paid"
-                  secondary={
-                    ticketDetails.totalPrice !== undefined
-                      ? new Intl.NumberFormat("es-NI", {
-                          style: "currency",
-                          currency: "NIO",
-                        }).format(ticketDetails.totalPrice)
-                      : "N/A"
-                  }
-                  primaryTypographyProps={{ fontWeight: "medium" }}
-                />
-              </ListItem>
-              <ListItem disableGutters>
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <CalendarIcon fontSize="small" color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Booked On"
-                  secondary={
-                    ticketDetails.bookingTransactionTime
-                      ? new Date(
-                          ticketDetails.bookingTransactionTime
-                        ).toLocaleString()
-                      : "N/A"
-                  }
-                  primaryTypographyProps={{
-                    fontSize: "0.8rem",
-                    fontWeight: "medium",
-                  }}
-                  secondaryTypographyProps={{ fontSize: "0.8rem" }}
-                />
-              </ListItem>
-            </List>
-          </Grid>
-          <Grid
-            item
-            xs={12}
-            md={5}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              mt: { xs: 3, md: 0 },
-            }}
-          >
-            <Typography
-              variant="overline"
-              display="block"
-              gutterBottom
-              align="center"
-            >
-              Scan at Entry
-            </Typography>
-            <Box
+          </Box>
+          <Divider sx={{ my: 2.5 }} />
+
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={7}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.primary", mb: 1.5 }}
+              >
+                {ticketDetails.movieTitle || "Movie Title N/A"}
+              </Typography>
+              <List dense disablePadding>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <PersonIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Booked For"
+                    secondary={ticketDetails.userName || "N/A"}
+                    primaryTypographyProps={{ fontWeight: "medium" }}
+                  />
+                </ListItem>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <CalendarIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Show Date & Time"
+                    secondary={displayShowDateTime}
+                    primaryTypographyProps={{ fontWeight: "medium" }}
+                  />
+                </ListItem>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <TheatersIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Room"
+                    secondary={ticketDetails.roomNumber || "N/A"}
+                    primaryTypographyProps={{ fontWeight: "medium" }}
+                  />
+                </ListItem>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <EventSeatIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Seats"
+                    secondary={
+                      ticketDetails.seats && ticketDetails.seats.length > 0
+                        ? ticketDetails.seats.map((s) => s.id).join(", ")
+                        : "N/A"
+                    }
+                    primaryTypographyProps={{ fontWeight: "medium" }}
+                  />
+                </ListItem>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <AttachMoneyIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Total Paid"
+                    secondary={
+                      ticketDetails.totalPrice !== undefined
+                        ? new Intl.NumberFormat("es-NI", {
+                            style: "currency",
+                            currency: "NIO",
+                          }).format(ticketDetails.totalPrice)
+                        : "N/A"
+                    }
+                    primaryTypographyProps={{ fontWeight: "medium" }}
+                  />
+                </ListItem>
+                <ListItem disableGutters>
+                  <ListItemIcon sx={{ minWidth: 38 }}>
+                    <CalendarIcon fontSize="small" color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Booked On"
+                    secondary={
+                      ticketDetails.bookingTransactionTime
+                        ? new Date(
+                            ticketDetails.bookingTransactionTime
+                          ).toLocaleString()
+                        : "N/A"
+                    }
+                    primaryTypographyProps={{
+                      fontSize: "0.8rem",
+                      fontWeight: "medium",
+                    }}
+                    secondaryTypographyProps={{ fontSize: "0.8rem" }}
+                  />
+                </ListItem>
+              </List>
+            </Grid>
+            <Grid
+              item
+              xs={12}
+              md={5}
               sx={{
-                p: 1,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 1,
-                backgroundColor: "white",
-                display: "inline-block",
-                boxShadow: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                mt: { xs: 3, md: 0 },
               }}
             >
-              {/* Using the namespace import */}
-              <QRCode
-                value={
-                  ticketDetails.qrCodeData ||
-                  `BookingID:${ticketDetails.bookingId}`
-                }
-                size={150} // Controls the pixel size of the QR code
-                bgColor="#FFFFFF"
-                fgColor="#000000"
-                level="M" // Error correction level: L, M, Q, H
-              />
-            </Box>
+              <Typography
+                variant="overline"
+                display="block"
+                gutterBottom
+                align="center"
+              >
+                Scan at Entry
+              </Typography>
+              {/* Added class "qr-code-container" for specific print styling if needed */}
+              <Box
+                className="qr-code-container"
+                sx={{
+                  p: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  backgroundColor: "white",
+                  display: "inline-block",
+                  boxShadow: 1,
+                }}
+              >
+                <QRCode
+                  value={
+                    ticketDetails.qrCodeData ||
+                    `BookingID:${ticketDetails.bookingId}`
+                  }
+                  size={150}
+                  bgColor="#FFFFFF"
+                  fgColor="#000000"
+                  level="M"
+                />
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
+        </Paper>
 
+        {/* This Box contains the buttons and should NOT be printed. Added className="no-print" */}
         <Box
+          className="no-print"
           sx={{
             mt: 4,
             display: "flex",
@@ -348,7 +383,7 @@ export default function TicketPage() {
             Print Ticket
           </Button>
         </Box>
-      </Paper>
-    </Container>
+      </Container>
+    </>
   );
 }

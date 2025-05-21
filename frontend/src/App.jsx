@@ -12,10 +12,13 @@ import CreateRoomPage from './pages/rooms/createRoom';
 import EditRoomPage from './pages/rooms/editRoom';
 import ListRoomsPage from './pages/movies/listMovies';
 import MovieDetailPage from './pages/movies/movieDetails';
-import CheckoutPage from './pages/bookings/checkout';
+import CheckoutPage from './pages/bookings/checkoutPage';
 import TicketPage from './pages/bookings/ticketPage';
 import EditMoviePage from './pages/movies/editMovie.jsx';
 import ListRoomsAdminPage from './pages/rooms/listRooms.jsx';
+import ProfilePage from './pages/user/profilePage.jsx';
+import ManageUsersPage from './pages/user/manageUsersPage.jsx';
+import MyTicketsPage from './pages/user/myTicketsPage.jsx';
 
 function App() {
   return (
@@ -38,6 +41,7 @@ function App() {
               <Route path="/rooms" element={<ListRoomsAdminPage />} />
               <Route path="/rooms/create" element={<CreateRoomPage />} />
               <Route path="/rooms/edit/:roomId" element={<EditRoomPage />} />
+              <Route path="/users" element={<ManageUsersPage />} />
               {/* You can add other admin routes here that need the MainLayout */}
             </Route>
 
@@ -48,7 +52,8 @@ function App() {
               <Route path="/movies/details/:movieId" element={<MovieDetailPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/bookings/ticket/:bookingId" element={<TicketPage />} />
-            {/*  <Route path="/profile" element={<div>User Profile</div>} /> */}
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/my-tickets" element={<MyTicketsPage />} />
             </Route>
             
           </Route>

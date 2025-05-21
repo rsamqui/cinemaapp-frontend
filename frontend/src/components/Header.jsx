@@ -79,10 +79,10 @@ export default function Header() {
           <MenuItem key="add-movie-profile" onClick={() => handleNavigate('/movies')}>
             <MovieIcon sx={{ mr: 1 }} fontSize="small" /> Manage Movies
           </MenuItem>,
-          <MenuItem key="manage-rooms-profile" onClick={() => handleNavigate('/admin/rooms')}>
+          <MenuItem key="manage-rooms-profile" onClick={() => handleNavigate('/rooms')}>
             <MeetingRoomIcon sx={{ mr: 1 }} fontSize="small" /> Manage Rooms
           </MenuItem>,
-          <MenuItem key="manage-users-profile" onClick={() => handleNavigate('/admin/users')}>
+          <MenuItem key="manage-users-profile" onClick={() => handleNavigate('/users')}>
             <PeopleIcon sx={{ mr: 1 }} fontSize="small" /> Manage Users
           </MenuItem>
       ]}

@@ -27,7 +27,18 @@ const getBookingDetailsForTicket = async (bookingId) => {
     }
 };
 
+const getMyBookings = async (userId) => {
+  try {
+    const response = await apiClient.get(`/bookings/ticket/${userId}`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching user's tickets:", error.response?.data || error.message);
+    throw error.response?.data || new Error("Failed to fetch your bookings.");
+  }
+};
+
 export default {
+  getMyBookings,
   createBooking,
   getBookingDetailsForTicket,
 };

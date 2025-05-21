@@ -10,7 +10,6 @@ const isTokenExpired = (decodedToken) => {
     return true;
   }
   const currentTime = Date.now() / 1000;
-  // console.log(`isTokenExpired: CurrentTime: ${currentTime}, Token Expires: ${decodedToken.exp}, Expired: ${decodedToken.exp < currentTime}`);
   return decodedToken.exp < currentTime;
 };
 
@@ -20,7 +19,7 @@ const mapDecodedTokenToUser = (decodedToken) => {
   const user = {
     id: decodedToken.sub || decodedToken.id || decodedToken.userId,
     email: decodedToken.email,
-    name: decodedToken.name,
+    name: decodedToken.name || '',
     roles: decodedToken.roles || (decodedToken.role ? [decodedToken.role] : []),
   };
   console.log("AuthContext (mapDecodedTokenToUser): Mapped user object:", JSON.stringify(user));
@@ -86,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
     console.log("AuthContext: Initialization complete. isLoading:", false);
   }, [processToken]);
-
+/*
   const login = async (credentials) => {
     console.log("AuthContext (login): Attempting login with credentials:", credentials.email);
     try {
@@ -111,6 +110,55 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
+*/
+
+const login = async (credentials) => {
+    try {
+        const loginResponse = await authService.login(credentials);
+        console.log("AuthContext (login): Login service response:", JSON.stringify(loginResponse));
+
+        if (loginResponse.token) {
+            localStorage.setItem('token', loginResponse.token);
+
+            let userToSet = null;
+
+            if (loginResponse.user && loginResponse.user.id) {
+                console.log("AuthContext (login): Using user object from loginResponse:", JSON.stringify(loginResponse.user));
+                userToSet = {
+                    id: loginResponse.user.id,
+                    name: loginResponse.user.name || '',
+                    email: loginResponse.user.email,
+                    roles: loginResponse.user.roles || (loginResponse.user.role ? [loginResponse.user.role] : [])
+                };
+            } else {
+                console.log("AuthContext (login): User object not in loginResponse, decoding token.");
+                try {
+                    const decoded = jwtDecode(loginResponse.token);
+                    userToSet = mapDecodedTokenToUser(decoded);
+                } catch (e) { console.error("AuthContext (login): Invalid token after login:", e); }
+            }
+
+            if (userToSet && userToSet.id) { 
+                setUser(userToSet);
+                setIsAuthenticated(true);
+                localStorage.setItem('user', JSON.stringify(userToSet));
+                console.log("AuthContext (login): User state set to:", JSON.stringify(userToSet));
+            } else {
+                throw new Error("User data could not be established after login (name might be missing).");
+            }
+        } else {
+            throw new Error("No token received from login.");
+        }
+        return loginResponse;
+    } catch (error) {
+        console.error("AuthContext (login): Login failed.", error);
+        authService.logout();
+        setUser(null);
+        setToken(null);
+        setIsAuthenticated(false);
+        throw error;
+    }
+};
 
   const logout = useCallback(() => {
     console.log("AuthContext (logout): Logging out.");
@@ -121,21 +169,19 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (userData) => {
-    // Register service might return a token upon successful registration (auto-login)
-    // or just a success message.
-    try { // <<< --- ADDED try block
+    try { 
       const data = await authService.register(userData);
-      if (data.token) { // If backend auto-logins and returns a token
+      if (data.token) {
         const success = processToken(data.token);
         if (!success) {
           console.warn("Token from registration was invalid or expired.");
-          // Decide if you want to throw an error here or just let registration succeed without login
+          
         }
       }
-      return data; // Return data from registration attempt
-    } catch (error) { // <<< --- ADDED catch block
+      return data;
+    } catch (error) { 
       console.error("Registration failed in AuthContext:", error);
-      throw error; // Re-throw error to be handled by the component calling register
+      throw error;
     }
   };
 
@@ -149,12 +195,12 @@ export const AuthProvider = ({ children }) => {
     let hasTheRole = false;
     if (Array.isArray(roleOrRoles)) {
       hasTheRole = currentUserRoles.some(userRole => roleOrRoles.includes(userRole));
-    } else { // If a single role string is passed (though ProtectedRoute should send array)
+    } else { 
       hasTheRole = currentUserRoles.includes(roleOrRoles);
     }
     console.log(`AuthContext (hasRole): Result: ${hasTheRole}`);
     return hasTheRole;
-  }, [user]); // Depend on user object
+  }, [user]); 
 
   const value = {
     user,
@@ -164,13 +210,12 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
-    roles: user?.roles || [], // Kept for direct access if needed
+    roles: user?.roles || [], 
     hasRole,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {/* It's often better to let consumers of isLoading decide how to render loading state */}
       {children}
     </AuthContext.Provider>
   );
