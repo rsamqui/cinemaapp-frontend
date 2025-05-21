@@ -55,7 +55,7 @@ export default function Footer() {
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <MovieIcon sx={{ color: "primary.main", fontSize: 40, mr: 1 }} />
               <Typography variant="h5" component="div" sx={{ fontWeight: 700, color: "text.primary" }}>
-                CinePlex {/* Changed from CinePass to match other components */}
+                CinePlex {/* Changed from Cineplex to match other components */}
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ mb: 2 }}>

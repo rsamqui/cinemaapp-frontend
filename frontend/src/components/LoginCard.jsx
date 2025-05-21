@@ -102,7 +102,7 @@ function LoginCard() {
             <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
               <MovieIcon sx={{ color: "primary.main", fontSize: 40, mr: 1 }} />
               <Typography component="h1" variant="h4" sx={{ fontWeight: 700 }}>
-                CinePass
+                CINEPLEX
               </Typography>
             </Box>
 
@@ -219,7 +219,7 @@ function LoginCard() {
 
         <Box sx={{ mt: 4, textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary">
-            &copy; {new Date().getFullYear()} CinePass. All rights reserved.
+            &copy; {new Date().getFullYear()} Cineplex. All rights reserved.
           </Typography>
         </Box>
       </Container>
