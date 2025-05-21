@@ -1,8 +1,7 @@
-// src/components/Room.jsx
 import React, { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
-import Seat from './Seat'; // Ensure this path is correct
-import { SEAT_STATUS, SEAT_COLORS } from '../constants/seatConstants'; // Ensure this path is correct
+import Seat from './Seat';
+import { SEAT_STATUS, SEAT_COLORS } from '../constants/seatConstants';
 
 const getAlphabetLetter = (index) => String.fromCharCode(65 + index);
 
@@ -10,8 +9,8 @@ export default function Room({
   initialRows,
   initialCols,
   externallySetSeats = [],
-  onLayoutChange,      // For admin config changes
-  onUserSeatToggle,    // For user booking selections
+  onLayoutChange,  
+  onUserSeatToggle,
   isEditable = false,
 }) {
   const seatsToRender = useMemo(() => {
@@ -30,11 +29,8 @@ export default function Room({
           if (seatInfoFromParent && seatInfoFromParent.status && Object.values(SEAT_STATUS).includes(seatInfoFromParent.status)) {
             currentStatus = seatInfoFromParent.status;
           } else if (seatInfoFromParent) {
-            // This case means seatInfoFromParent was found, but its status is not in your SEAT_STATUS values
-            // Or seatInfoFromParent.status is undefined/null.
-            // console.warn(`Room.jsx: Seat ${seatId} from externallySetSeats has invalid/missing status '${seatInfoFromParent.status}'. Defaulting to AVAILABLE.`);
+            console.warn(`Room.jsx: Seat ${seatId} from externallySetSeats has invalid/missing status '${seatInfoFromParent.status}'. Defaulting to AVAILABLE.`);
           }
-          // If seatInfoFromParent is not found, it also defaults to AVAILABLE.
 
           generated.push({
             id: seatId, rowLabel, colLabel, rowIndex: i, colIndex: j,
@@ -43,19 +39,17 @@ export default function Room({
         }
       }
     }
-    // console.log(`Room.jsx: Generated seatsToRender (first 5 for row A):`, JSON.stringify(generated.filter(s=>s.rowLabel === 'A').slice(0,5)));
     return generated;
   }, [initialRows, initialCols, externallySetSeats, isEditable]);
 
   const handleSeatClick = useCallback((seatId, currentSeatStatus) => {
     if (isEditable) {
       if (onLayoutChange) {
-        // Admin toggles between AVAILABLE and (e.g.) UNAVAILABLE_ADMIN or BLOCKED
         const newLayout = seatsToRender.map(seat => {
           if (seat.id === seatId) {
             if (seat.status === SEAT_STATUS.OCCUPIED || seat.status === SEAT_STATUS.RESERVED) return seat;
             const newStatus = seat.status === SEAT_STATUS.AVAILABLE
-              ? SEAT_STATUS.UNAVAILABLE_ADMIN // Or SEAT_STATUS.BLOCKED
+              ? SEAT_STATUS.UNAVAILABLE_ADMIN
               : SEAT_STATUS.AVAILABLE;
             return { ...seat, status: newStatus };
           }
@@ -63,7 +57,7 @@ export default function Room({
         });
         onLayoutChange(newLayout);
       }
-    } else { // User booking mode
+    } else {
       if (!onUserSeatToggle) return;
       if (currentSeatStatus === SEAT_STATUS.AVAILABLE) {
         onUserSeatToggle({ id: seatId, status: currentSeatStatus }, SEAT_STATUS.SELECTED);
@@ -71,16 +65,13 @@ export default function Room({
         onUserSeatToggle({ id: seatId, status: currentSeatStatus }, SEAT_STATUS.AVAILABLE);
       }
     }
-  }, [isEditable, onLayoutChange, onUserSeatToggle, seatsToRender]); // seatsToRender is needed if modifying it directly for onLayoutChange
+  }, [isEditable, onLayoutChange, onUserSeatToggle, seatsToRender]);
 
 
-  // Conditional rendering: If initialRows or initialCols are not yet set (or 0), show message.
   if (!(initialRows > 0 && initialCols > 0)) {
     return <Typography sx={{textAlign: 'center', mt: 2, p:2 }}>Set rows and columns to view layout.</Typography>;
   }
   
-  // If rows/cols are set but seatsToRender is somehow empty (shouldn't happen if above guard passes and useMemo works)
-  // This also guards against rendering before the useMemo has populated seatsToRender for the first time.
   if (seatsToRender.length === 0) {
       return <Typography sx={{textAlign: 'center', mt: 2, p:2 }}>Generating seat layout...</Typography>;
   }
@@ -92,7 +83,7 @@ export default function Room({
       </Box>
 
       <Box sx={{ overflowX: 'auto', pb: 2, display: 'flex', justifyContent: 'center' }}>
-        <Box> {/* Inner Box wrapping all rows */}
+        <Box>
           {Array.from({ length: initialRows }).map((_, rowIndex) => (
             <Box key={`row-${rowIndex}`} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography sx={{ width: '30px', mr: 1, textAlign: 'center', fontWeight: 'bold', color: 'text.secondary' }}>
@@ -106,7 +97,7 @@ export default function Room({
                     <Seat
                       id={seat.id}
                       label={seat.colLabel}
-                      status={seat.status} // This status comes directly from seatsToRender
+                      status={seat.status}
                       onClick={() => handleSeatClick(seat.id, seat.status)}
                       disabled={
                         isEditable
@@ -121,7 +112,6 @@ export default function Room({
         </Box>
       </Box>
 
-      {/* Legend */}
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 2 }}>
         {Object.keys(SEAT_STATUS).map((statusKey) => {
           const statusValue = SEAT_STATUS[statusKey];
@@ -130,7 +120,7 @@ export default function Room({
 
           const showInLegend = isEditable
             ? (statusValue === SEAT_STATUS.AVAILABLE || statusValue === SEAT_STATUS.UNAVAILABLE_ADMIN || statusValue === SEAT_STATUS.BLOCKED || statusValue === SEAT_STATUS.OCCUPIED || statusValue === SEAT_STATUS.RESERVED) // Admin sees more
-            : (statusValue !== SEAT_STATUS.UNAVAILABLE_ADMIN && statusValue !== SEAT_STATUS.BLOCKED); // User sees bookable/selected/taken/reserved
+            : (statusValue !== SEAT_STATUS.UNAVAILABLE_ADMIN && statusValue !== SEAT_STATUS.BLOCKED);
 
           if (showInLegend) {
             return (

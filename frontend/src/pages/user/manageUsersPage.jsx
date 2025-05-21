@@ -125,7 +125,7 @@ export default function ManageUsersPage() {
         <Typography variant="h4" component="h1" fontWeight="bold">
           Manage Users
         </Typography>
-        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => navigate('/admin/create-user')}> {/* TODO: Create this page */}
+        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => navigate('/admin/create-user')}>
             Add New User
         </Button>
       </Box>

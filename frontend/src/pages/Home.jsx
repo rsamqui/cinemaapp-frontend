@@ -5,10 +5,7 @@ import {
   CardContent,
   CardMedia,
   Container,
-  Divider,
   Grid,
-  IconButton,
-  Link,
   Typography,
   CardActions,
 } from "@mui/material";
@@ -20,9 +17,8 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
 } from "@mui/icons-material";
-import { Link as RouterLink } from 'react-router-dom'; // Assuming you use React Router for navigation
+import { Link as RouterLink } from 'react-router-dom';
 
-// Sample movie data (keep this or fetch it as needed)
 const featuredMovie = {
   id: 1,
   title: "Dune: Part Two",
@@ -43,20 +39,16 @@ const nowShowingMovies = [
 
 
 export default function Home() {
-  // Placeholder handlers - implement your navigation/booking logic
   const handleWatchTrailer = (movieId) => {
     console.log("Watch trailer for movie ID:", movieId);
-    // navigate(`/movies/${movieId}/`);
   };
 
   const handleBookTickets = (movieId) => {
     console.log("Book tickets for movie ID:", movieId);
-    // navigate(`/booking/${movieId}`);
   };
 
   return (
     <>
-      {/* Hero Section */}
       <Box
         sx={{
           position: "relative",
@@ -147,7 +139,6 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* Now Showing Section */}
       <Container maxWidth={false} sx={{ py: 6 }}>
         <Box
           sx={{
@@ -172,22 +163,20 @@ export default function Home() {
                   height: "100%",
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: 'space-between', // Pushes CardActions to the bottom
+                  justifyContent: 'space-between',
                   bgcolor: "background.paper",
                   transition: "transform 0.2s",
                   "&:hover": { transform: "scale(1.03)" },
                 }}
               >
-                {/* Option: Make CardMedia and CardContent part of a CardActionArea if they should navigate */}
-                {/* For this fix, we assume the button is the primary action, not the whole card area */}
                 <Box component={RouterLink} to={`/movies/${movie.id}`} sx={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <CardMedia
                     component="img"
-                    height="350" // Adjust as needed, or use sx aspect-ratio
+                    height="350"
                     image={movie.image}
                     alt={movie.title}
                   />
-                  <CardContent sx={{ flexGrow: 1 }}> {/* Allows content to take space */}
+                  <CardContent sx={{ flexGrow: 1 }}>
                     <Box
                       sx={{
                         display: "flex",
@@ -196,24 +185,24 @@ export default function Home() {
                         mb: 1,
                       }}
                     >
-                      <Typography gutterBottom variant="h6" component="div" noWrap sx={{fontSize: '1rem'}}> {/* Adjusted font size */}
+                      <Typography gutterBottom variant="h6" component="div" noWrap sx={{fontSize: '1rem'}}>
                         {movie.title}
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}> {/* Added margin for spacing */}
+                      <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                         <StarIcon sx={{ color: "secondary.main", mr: 0.5 }} fontSize="small"/>
                         <Typography variant="body2">{movie.rating}</Typography>
                       </Box>
                     </Box>
                   </CardContent>
                 </Box>
-                <CardActions sx={{ justifyContent: 'center', p: 2 }}> {/* Added CardActions */}
+                <CardActions sx={{ justifyContent: 'center', p: 2 }}>
                   <Button
                     variant="contained"
                     color="primary"
                     fullWidth
                     size="small"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevent link navigation if button is somehow part of it
+                        e.stopPropagation();
                         handleBookTickets(movie.id);
                     }}
                   >

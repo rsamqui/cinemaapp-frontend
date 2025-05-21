@@ -2,7 +2,7 @@ import apiClient from './api';
 
 const getMovies = async () => {
   try {
-    const response = await apiClient.get('/movies'); // Endpoint to get all movies
+    const response = await apiClient.get('/movies');
     return response.data || [];
   } catch (error) {
     console.error("Error fetching all movies:", error.response?.data || error.message);
@@ -62,7 +62,7 @@ const getAvailableMovies = async (roomId = null) => {
 
 const addMovie = async (movieData) => {
   try {
-    const response = await apiClient.post('/movies/new', movieData); // Or /admin/movies
+    const response = await apiClient.post('/movies/new', movieData);
     return response.data;
   } catch (error) {
     console.error("Error adding new movie:", error.response?.data || error.message);

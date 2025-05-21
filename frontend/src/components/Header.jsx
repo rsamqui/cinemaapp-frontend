@@ -212,7 +212,7 @@ export default function Header() {
       </AppBar>
       {!isMobile && renderProfileMenu}
       {renderMobileNavMenu}
-      <Toolbar /> {/* Spacer */}
+      <Toolbar />
     </>
   );
 }

@@ -15,36 +15,31 @@ import {
 import {
   Movie as MovieIcon,
   Description as DescriptionIcon,
-  Timer as TimerIcon, // Duration
-  Link as LinkIcon, // Poster URL
-  Category as CategoryIcon, // Genre
-  StarRate as StarRateIcon, // Rating
-  CloudUpload as CloudUploadIcon, // For image upload, if you implement it
+  Timer as TimerIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
-import movieService from '../../services/movieService'; // Assuming you have this service
+import movieService from '../../services/movieService';
 
 export default function AddMoviePage() {
 
   const [title, setTitle] = useState('');
   const [synopsis, setSynopsis] = useState('');
-  const [duration, setDuration] = useState(''); // e.g., "02:25:00" or "145 min"
+  const [duration, setDuration] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
   const [genre, setGenre] = useState('');
-  const [rating, setRating] = useState(''); // e.g., "4.5" or an integer if out of 10
+  const [rating, setRating] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  // Basic form validation (can be enhanced with libraries like Yup or Zod)
   const validateForm = () => {
     if (!title.trim()) return "Movie Title is required.";
     if (!synopsis.trim()) return "Synopsis is required.";
     if (!duration.trim()) return "Duration is required (e.g., 'HH:MM:SS' or '120 min').";
     if (!posterUrl.trim()) return "Poster URL is required.";
-    // Add more specific validation for URL format, duration format, rating range etc.
-    return null; // No errors
+    return null;
   };
 
   const handleSubmit = async (event) => {
@@ -62,29 +57,25 @@ export default function AddMoviePage() {
     const newMovieData = {
       title: title.trim(),
       synopsis: synopsis.trim(),
-      duration: duration.trim(), // Ensure backend can parse this format
+      duration: duration.trim(),
       posterUrl: posterUrl.trim(),
-      genre: genre.trim() || null, // Send null if empty and DB allows it
-      rating: rating.trim() ? parseFloat(rating) : null, // Parse to float, send null if empty
+      genre: genre.trim() || null,
+      rating: rating.trim() ? parseFloat(rating) : null,
     };
 
     console.log("Submitting new movie data:", newMovieData);
 
     try {
-      // You'll need an addMovie function in your movieService.js
       const response = await movieService.addMovie(newMovieData);
       console.log("Movie added successfully:", response);
       setSnackbarMessage(`Movie "${newMovieData.title}" added successfully!`);
       setSnackbarOpen(true);
-      // Reset form
       setTitle('');
       setSynopsis('');
       setDuration('');
       setPosterUrl('');
       setGenre('');
       setRating('');
-      // Optionally navigate to a movie list page or the detail page of the new movie
-      // navigate(`/admin/movies`);
     } catch (err) {
       console.error("Failed to add movie:", err);
       setSaveError(err.message || err.error || "An unexpected error occurred while adding the movie.");

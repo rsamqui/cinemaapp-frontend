@@ -1,4 +1,3 @@
-// src/pages/MyTicketsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
@@ -15,8 +14,8 @@ import {
     ArrowForwardIos as ArrowForwardIosIcon,
     SentimentVeryDissatisfied as SadIcon,
     ArrowBack as ArrowBackIcon,
-    ErrorOutline as ErrorIcon, // For booking status chip if needed
-    ConfirmationNumber as ConfirmationNumberIcon, // <<< ENSURE THIS IS IMPORTED
+    ErrorOutline as ErrorIcon,
+    ConfirmationNumber as ConfirmationNumberIcon,
 } from '@mui/icons-material';
 import bookingService from '../../services/bookingService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -147,7 +146,7 @@ export default function MyTicketsPage() {
                             </ListItem>
                              <ListItem disablePadding sx={{py:0.25}}>
                                 <ListItemIcon sx={{minWidth: 30}}>
-                                    <ConfirmationNumberIcon fontSize="inherit" /> {/* Using the imported icon */}
+                                    <ConfirmationNumberIcon fontSize="inherit" />
                                 </ListItemIcon>
                                 <ListItemText secondaryTypographyProps={{fontSize: '0.85rem'}} primary="Booking ID" secondary={booking.bookingId} />
                             </ListItem>

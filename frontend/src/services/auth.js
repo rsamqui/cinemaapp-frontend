@@ -5,14 +5,12 @@ const login = async (credentials) => {
     const response = await apiClient.post('/login', credentials);
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
-      // Optionally store user info too, or fetch it separately
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
     }
     return response.data;
   } catch (error) {
-    // Handle or throw error to be caught by the component
     console.error("Login error:", error.response?.data || error.message);
     throw error.response?.data || new Error("Login failed");
   }
@@ -21,7 +19,6 @@ const login = async (credentials) => {
 const register = async (userData) => {
   try {
     const response = await apiClient.post('/register', userData);
-    // Assuming backend might automatically log in user or just return a success message
     return response.data;
   } catch (error) {
     console.error("Registration error:", error.response?.data || error.message);
@@ -41,7 +38,7 @@ const getCurrentUser = () => {
       return JSON.parse(userStr);
     } catch (e) {
       console.error("Error parsing user from localStorage", e);
-      localStorage.removeItem('user'); // Clear corrupted data
+      localStorage.removeItem('user');
       return null;
     }
   }

@@ -1,4 +1,3 @@
-// src/components/RegisterCard.jsx
 import { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom"; // Import RouterLink for internal navigation
 import { useAuth } from "../contexts/AuthContext";
@@ -11,10 +10,8 @@ import {
   Paper,
   InputAdornment,
   IconButton,
-  Link as MuiLink, // Renamed to avoid conflict
+  Link as MuiLink,
   Divider,
-  // Checkbox, // Not typically needed for registration
-  // FormControlLabel, // Not typically needed for registration
 } from "@mui/material";
 import {
   Email as EmailIcon,
@@ -22,13 +19,13 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Movie as MovieIcon,
-  Person as PersonIcon, // Icon for Name
+  Person as PersonIcon, 
 } from "@mui/icons-material";
 import { ThemeProvider } from "@mui/material/styles";
-import { darkTheme } from "../theme"; // Assuming this path is correct
+import { darkTheme } from "../theme";
 
 function RegisterCard() {
-  const { register } = useAuth(); // Use the register function from AuthContext
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -43,7 +40,7 @@ function RegisterCard() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [generalError, setGeneralError] = useState(""); // For general API errors
+  const [generalError, setGeneralError] = useState("");
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleClickShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
@@ -55,7 +52,6 @@ function RegisterCard() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // Reset errors
     setNameError("");
     setEmailError("");
     setPasswordError("");
@@ -160,7 +156,7 @@ function RegisterCard() {
                 label="Full Name"
                 name="name"
                 autoComplete="name"
-                autoFocus // Autofocus on the first field
+                autoFocus
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 error={!!nameError}
@@ -203,7 +199,7 @@ function RegisterCard() {
                 label="Password"
                 type={showPassword ? "text" : "password"}
                 id="password"
-                autoComplete="new-password" // Use "new-password" for registration
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={!!passwordError}
@@ -260,16 +256,13 @@ function RegisterCard() {
                   ),
                 }}
               />
-
-              {/* Removed "Remember me" and "Forgot password?" for registration form */}
-
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 color="primary"
                 sx={{
-                  mt: 3, // Adjusted margin
+                  mt: 3,
                   mb: 3,
                   py: 1.5,
                   fontSize: "1rem",

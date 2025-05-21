@@ -85,32 +85,6 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
     console.log("AuthContext: Initialization complete. isLoading:", false);
   }, [processToken]);
-/*
-  const login = async (credentials) => {
-    console.log("AuthContext (login): Attempting login with credentials:", credentials.email);
-    try {
-      const data = await authService.login(credentials);
-      console.log("AuthContext (login): Login service response:", data);
-      if (data.token) {
-        const success = processToken(data.token);
-        if (!success) {
-          throw new Error("Invalid or expired token received after login.");
-        }
-        console.log("AuthContext (login): Login successful, auth state updated.");
-      } else {
-        console.error("AuthContext (login): No token received from login service.");
-        throw new Error("No token received from login.");
-      }
-      return data;
-    } catch (error) {
-      console.error("AuthContext (login): Login failed.", error);
-      setToken(null);
-      setUser(null);
-      setIsAuthenticated(false);
-      throw error;
-    }
-  };
-*/
 
 const login = async (credentials) => {
     try {

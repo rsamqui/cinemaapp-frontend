@@ -3,7 +3,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "./theme";
 import ProtectedRoute from './constants/protectedRoute';
 import MainLayout from './layouts/MainLayout';
-import Home from './pages/Home.jsx';
+import Home from './pages/home.jsx';
 import Login from './pages/user/login.jsx';
 import Register from './pages/user/register.jsx';
 import AddMoviePage from './pages/movies/addMovie.jsx';

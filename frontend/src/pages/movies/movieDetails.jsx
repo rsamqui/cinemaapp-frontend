@@ -21,14 +21,14 @@ import {
 import movieService from '../../services/movieService';
 
 export default function MovieDetailPage() {
-  const { movieId: routeMovieId } = useParams(); // Get movieId from URL, rename to avoid conflict
+  const { movieId: routeMovieId } = useParams();
   const navigate = useNavigate();
-  const [apiResponse, setApiResponse] = useState(null); // Stores the direct API response
+  const [apiResponse, setApiResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!routeMovieId) { // Use routeMovieId from params
+    if (!routeMovieId) {
       setError("Movie ID is missing.");
       setIsLoading(false);
       return;
@@ -39,7 +39,7 @@ export default function MovieDetailPage() {
       try {
         const data = await movieService.getMovieScreeningDetails(routeMovieId);
         console.log("MovieDetailPage - Fetched Data:", JSON.stringify(data, null, 2));
-        setApiResponse(data); // Store the whole flat response
+        setApiResponse(data);
       } catch (err) {
         console.error(`Failed to fetch details for movie ${routeMovieId}:`, err);
         setError(err.message || "Could not load movie details. Please try again.");

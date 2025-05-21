@@ -70,9 +70,8 @@ export default function CreateRoomPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSaveError(null); // Clear previous errors
+    setSaveError(null);
 
-    // Validation
     if (!roomNumber.trim() || isNaN(parseInt(roomNumber, 10))) {
       setSaveError("Room Number is required and must be a number.");
       return;
@@ -107,7 +106,7 @@ export default function CreateRoomPage() {
       setNumRows(7);
       setNumCols(12);
       setCurrentSeatLayout([]); 
-      // navigate('/rooms');
+      navigate('/rooms');
     } catch (err) {
       console.error("Failed to create room via API:", err);
       setSaveError(err.message || "An unexpected error occurred while saving the room.");
@@ -139,7 +138,7 @@ export default function CreateRoomPage() {
                 fullWidth
                 required
                 label="Room Number (e.g., 1, 2)"
-                type="number" // Set type to number
+                type="number"
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
                 error={
@@ -215,8 +214,7 @@ export default function CreateRoomPage() {
                   if (!isNaN(val)) {
                     setNumRows(Math.max(1, Math.min(MAX_ADMIN_ROWS, val)));
                   } else if (e.target.value === '') {
-                    // Allow clearing the field, maybe set to a default or handle empty state
-                    setNumRows(1); // Or some other sensible default for empty
+                    setNumRows(1);
                   }
                 }}
                 InputProps={{ inputProps: { min: 1, max: MAX_ADMIN_ROWS } }}
@@ -252,7 +250,6 @@ export default function CreateRoomPage() {
           <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
             Room Layout Preview
           </Typography>
-          {/* RoomEditorLayout is still useful for visual feedback of dimensions */}
           {numRows > 0 && numCols > 0 ? (
             <RoomEditorLayout
               key={`${numRows}-${numCols}-${currentSeatLayout.length}`}
@@ -263,7 +260,7 @@ export default function CreateRoomPage() {
                 currentSeatLayout.length > 0
                   ? currentSeatLayout
                   : initialExternallySetSeats
-              } // Pass current layout if modified
+              }
               onLayoutChange={handleRoomLayoutChange}
             />
           ) : (

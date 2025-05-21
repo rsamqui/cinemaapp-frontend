@@ -123,7 +123,6 @@ export default function TicketPage() {
   }
 
   const fixedShowtime = "07:00 PM";
-  // Corrected template literal for displayShowDateTime
   const displayShowDateTime = `${ticketDetails.showDate} - ${fixedShowtime}`;
 
   return (
@@ -327,7 +326,6 @@ export default function TicketPage() {
               >
                 Scan at Entry
               </Typography>
-              {/* Added class "qr-code-container" for specific print styling if needed */}
               <Box
                 className="qr-code-container"
                 sx={{
@@ -355,7 +353,6 @@ export default function TicketPage() {
           </Grid>
         </Paper>
 
-        {/* This Box contains the buttons and should NOT be printed. Added className="no-print" */}
         <Box
           className="no-print"
           sx={{

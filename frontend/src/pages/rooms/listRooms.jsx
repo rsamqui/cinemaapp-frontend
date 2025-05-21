@@ -67,7 +67,7 @@ export default function ListRoomsAdminPage() {
       await roomService.deleteRoom(roomToDelete.id);
       setSnackbarMessage(`Room ${roomToDelete.roomNumber || roomToDelete.id} deleted successfully.`);
       setSnackbarOpen(true);
-      loadRooms(); // Refresh the list
+      loadRooms();
     } catch (err) {
       console.error("Failed to delete room:", err);
       setSnackbarMessage(err.message || "Failed to delete room.");
@@ -167,7 +167,6 @@ export default function ListRoomsAdminPage() {
         ))}
       </Grid>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirm Delete Room</DialogTitle>
         <DialogContent>

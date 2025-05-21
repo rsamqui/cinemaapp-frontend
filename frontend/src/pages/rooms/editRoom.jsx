@@ -34,7 +34,7 @@ export default function EditRoomPage() {
     const loadAllMovies = async () => {
       setIsLoadingMovies(true);
       try {
-        const fetchedMovies = await movieService.getMovies(); // Fetches all movies
+        const fetchedMovies = await movieService.getMovies();
         setMovies(fetchedMovies || []);
       } catch (err) {
         console.error("EditRoomPage: Failed to fetch movies:", err);
@@ -85,7 +85,6 @@ export default function EditRoomPage() {
 
   const handleRoomLayoutChange = useCallback((newLayout) => {
     console.log("EditRoomPage: Visual layout would be updated by Room if it had internal changes", newLayout.length);
-    //setCurrentSeatLayout(newLayout);
   }, []);
 
   const handleSubmit = async (event) => {
@@ -132,7 +131,6 @@ export default function EditRoomPage() {
 
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
-  // This is used to pass the currently known seat statuses to RoomComponent
   const externallySetSeatsForEditor = useMemo(() => currentSeatLayout, [currentSeatLayout]);
 
   if (isLoadingPage || isLoadingMovies) { /* ... loading UI ... */ }
@@ -145,13 +143,10 @@ export default function EditRoomPage() {
           Edit Room Configuration
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          {/* Grid for inputs: Room Number, Room Name, Movie Select, Rows, Columns */}
           <Grid container spacing={3} alignItems="flex-start">
-            {/* Room Number */}
             <Grid item xs={12} sm={6} md={3}>
               <TextField fullWidth required label="Room Number" type="number" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} error={!!saveError && (!roomNumber.trim() || isNaN(parseInt(roomNumber,10)))} helperText={!!saveError && (!roomNumber.trim() || isNaN(parseInt(roomNumber,10))) ? "Required & numeric" : ""} />
             </Grid>
-            {/* Movie Select */}
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth required error={!!saveError && !selectedMovieId}>
                 <InputLabel id="movie-select-label">Associated Movie</InputLabel>
@@ -162,11 +157,9 @@ export default function EditRoomPage() {
                 {!!saveError && !selectedMovieId && <Typography component="p" color="error" variant="caption" sx={{ml:1.5, mt:0.5}}>Required</Typography>}
               </FormControl>
             </Grid>
-            {/* Rows */}
             <Grid item xs={6} sm={3} md={1.5}>
               <TextField fullWidth required label="Total Rows" type="number" value={numRows} onChange={(e) => setNumRows(Math.max(0, Math.min(MAX_ADMIN_ROWS, parseInt(e.target.value,10) || 0)))} InputProps={{ inputProps: { min: 1, max: MAX_ADMIN_ROWS } }} error={!!saveError && (isNaN(parseInt(numRows,10)) || parseInt(numRows,10) <=0)} helperText={!!saveError && (isNaN(parseInt(numRows,10)) || parseInt(numRows,10) <=0) ? "Invalid" : ""}/>
             </Grid>
-            {/* Columns */}
             <Grid item xs={6} sm={3} md={1.5}>
               <TextField fullWidth required label="Total Columns" type="number" value={numCols} onChange={(e) => setNumCols(Math.max(0, Math.min(MAX_ADMIN_COLS, parseInt(e.target.value,10) || 0)))} InputProps={{ inputProps: { min: 1, max: MAX_ADMIN_COLS } }} error={!!saveError && (isNaN(parseInt(numCols,10)) || parseInt(numCols,10) <=0)} helperText={!!saveError && (isNaN(parseInt(numCols,10)) || parseInt(numCols,10) <=0) ? "Invalid" : ""}/>
             </Grid>
@@ -175,12 +168,12 @@ export default function EditRoomPage() {
           <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Room Layout Preview</Typography>
           {(numRows > 0 && numCols > 0) ? (
             <Room
-              key={`${roomId}-${numRows}-${numCols}-${currentSeatLayout.length}`} // Use currentSeatLayout for key
+              key={`${roomId}-${numRows}-${numCols}-${currentSeatLayout.length}`}
               initialRows={numRows}
               initialCols={numCols}
-              isEditable={false} // Set to false if admin is not blocking seats here
-              externallySetSeats={externallySetSeatsForEditor} // Shows fetched layout
-              onLayoutChange={handleRoomLayoutChange} // Or remove if not needed
+              isEditable={false}
+              externallySetSeats={externallySetSeatsForEditor}
+              onLayoutChange={handleRoomLayoutChange}
             />
           ) : (<Alert severity="info" sx={{mt: 2}}>Enter valid rows and columns to see a preview.</Alert>)}
 

@@ -20,7 +20,7 @@ const getNext7Days = () => {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
     days.push({
-      value: formatDateForAPI(date), // YYYY-MM-DD
+      value: formatDateForAPI(date),
       label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
     });
   }
@@ -36,7 +36,7 @@ const DEFAULT_MOVIE_DETAILS = {
 };
 
 export default function SeatSelectionPage() {
-  const { roomId } = useParams(); // This is used as roomId
+  const { roomId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -94,9 +94,8 @@ export default function SeatSelectionPage() {
           roomNumber: roomData.roomNumber || "N/A", roomId: roomData.id,
           movieId: roomData.movieId,
         });
-        // seatLayout from backend should ideally reflect statuses for selectedShowDate
         setInitialSeatStatuses((roomData.seatLayout || []).map(seat => ({...seat, dbId: seat.dbId || seat.id})));
-        setUserSelectedSeatIds(new Set()); // Reset selections when date or layout changes
+        setUserSelectedSeatIds(new Set());
 
         setMovieDetails(prev => ({
           ...DEFAULT_MOVIE_DETAILS,
@@ -105,14 +104,13 @@ export default function SeatSelectionPage() {
           title: roomData.movieTitle || location.state?.movieInfo?.title || DEFAULT_MOVIE_DETAILS.title,
           ticketPrice: TICKET_PRICE,
           screen: roomData.roomNumber || prev?.screen,
-          showtimeDate: selectedShowDate, // Update movieDetails with the selected date
-          showtimeTime: prev?.showtimeTime || DEFAULT_MOVIE_DETAILS.showtimeTime, // Keep existing time or default
+          showtimeDate: selectedShowDate,
+          showtimeTime: prev?.showtimeTime || DEFAULT_MOVIE_DETAILS.showtimeTime,
         }));
       } else { throw new Error("Room data not found or invalid response."); }
     } catch (err) {
       console.error("SeatSelectionPage (loadLayout): Failed to load room layout:", err);
       setError(err.message || "Sorry, we couldn't load the seat map.");
-      // Reset states on error
       setRoomConfig({ rows: 0, cols: 0, roomNumber: null, roomId: null, movieId: null });
       setInitialSeatStatuses([]);
     } finally { setIsLoading(false); }
@@ -259,10 +257,8 @@ export default function SeatSelectionPage() {
           Select Your Seats
         </Typography>
 
-        {/* Movie and Showtime Info Box */}
         <Box sx={{ mb: 3, p: 2, backgroundColor: "rgba(0,0,0,0.05)", borderRadius: 1 }}>
           <Typography variant="h6">{movieDetails.title || "Movie Title"}</Typography>
-          {/* Date Selector */}
           <FormControl fullWidth margin="normal" sx={{my:2, maxWidth: {sm: '300px'} }}>
             <InputLabel id="show-date-select-label">Show Date</InputLabel>
             <Select
@@ -271,7 +267,7 @@ export default function SeatSelectionPage() {
               label="Show Date"
               onChange={(e) => {
                 setSelectedShowDate(e.target.value);
-                setUserSelectedSeatIds(new Set()); // Reset selected seats when date changes
+                setUserSelectedSeatIds(new Set());
               }}
             >
               {availableDates.map(dateOpt => (
@@ -286,19 +282,18 @@ export default function SeatSelectionPage() {
           </Typography>
         </Box>
 
-        {/* Conditional Rendering for Room based on loading state for seat map */}
-        {isLoading && roomConfig.rows > 0 ? ( // Show loader if rows are set but still loading (e.g. date change)
+        {isLoading && roomConfig.rows > 0 ? (
              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
                 <CircularProgress /> <Typography sx={{ ml: 2 }}>Loading Seat Map for {new Date(selectedShowDate + 'T00:00:00').toLocaleDateString()}...</Typography>
             </Box>
-        ) : error && roomConfig.rows > 0 ? ( // Show error if rows are set but loading failed
+        ) : error && roomConfig.rows > 0 ? (
              <Container sx={{ py: 2, textAlign: "center" }}>
                 <Alert severity="error" sx={{ justifyContent: "center" }}>{error}</Alert>
                 <Button variant="outlined" onClick={loadLayout} sx={{ mt: 2 }}> Try Again </Button>
             </Container>
         ) : roomConfig.rows > 0 && roomConfig.cols > 0 ? (
           <Room
-            key={`${roomConfig.roomId}-${selectedShowDate}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`} // Add selectedShowDate to key
+            key={`${roomConfig.roomId}-${selectedShowDate}-${roomConfig.rows}-${roomConfig.cols}-${userSelectedSeatIds.size}`}
             initialRows={roomConfig.rows}
             initialCols={roomConfig.cols}
             externallySetSeats={allSeatStatusesForRoom}
@@ -309,7 +304,6 @@ export default function SeatSelectionPage() {
           !isLoading && <Alert severity="info" sx={{mt: 2}}>Seat map is currently unavailable or room dimensions are not set.</Alert>
         )}
 
-        {/* ... (Rest of JSX: Divider, Your Selection, Total Price, Proceed to Checkout Button) ... */}
          <Divider sx={{ my: 4 }} />
          <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom>Your Selection</Typography>

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react'; // <<< Make sure useCallback is imported
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Card, CardActionArea, CardMedia,
   CardContent, CardActions, Button, Box, CircularProgress, Alert, Chip, IconButton,
-  Dialog, DialogActions, DialogTitle, DialogContentText, DialogContent, // <<< ADDED DialogContent
-  Snackbar, // Added Snackbar import
+  Dialog, DialogActions, DialogTitle, DialogContentText, DialogContent,
+  Snackbar,
 } from '@mui/material';
 import {
   Star as StarIcon,
@@ -12,7 +12,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   AddCircleOutline as AddIcon,
-  Theaters as TheatersIcon, // For empty state
+  Theaters as TheatersIcon,
 } from '@mui/icons-material';
 import movieService from '../../services/movieService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -122,7 +122,7 @@ export default function ListMoviesPage() {
     } finally {
       handleCloseDeleteDialog();
     }
-  }, [movieToDelete, loadData, handleCloseDeleteDialog]); // Added handleCloseDeleteDialog
+  }, [movieToDelete, loadData, handleCloseDeleteDialog]);
 
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
@@ -149,7 +149,7 @@ export default function ListMoviesPage() {
     );
   }
 
-  if (!isLoading && displayData.length === 0) { // Corrected check
+  if (!isLoading && displayData.length === 0) {
     return (
       <Container sx={{ py: 4, textAlign: "center" }}>
         <TheatersIcon sx={{ fontSize: 60, color: "text.secondary", mb: 2 }} />
@@ -175,12 +175,11 @@ export default function ListMoviesPage() {
             </Button>
         )}
       </Box>
-      <Grid container spacing={3} justifyContent="flex-start"> {/* Ensure consistent spacing */}
+      <Grid container spacing={3} justifyContent="flex-start">
         {displayData.map((item) => {
-          // Ensure item.movie is defined before trying to access its properties
           if (!item || !item.movie) {
             console.warn("ListMoviesPage: Item or item.movie is undefined, skipping card.", item);
-            return null; // Skip rendering this card if data is malformed
+            return null;
           }
           return (
             <Grid item key={item.screeningId || item.movie.id} xs={12} sm={6} md={4} lg={3} xl={2.4}>
@@ -240,7 +239,7 @@ export default function ListMoviesPage() {
 
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent> {/* Ensure DialogContent is imported and used */}
+        <DialogContent>
           <DialogContentText>
             Are you sure you want to delete the movie "{movieToDelete?.movie?.title}"? This action cannot be undone.
           </DialogContentText>

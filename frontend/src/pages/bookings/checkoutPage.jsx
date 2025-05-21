@@ -10,7 +10,7 @@ import {
   Person as PersonIcon, Payments as PaymentsIcon, CalendarToday as CalendarIcon,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext'; // To get userId and user's name
+import { useAuth } from '../../contexts/AuthContext';
 import bookingService from '../../services/bookingService';
 
 export default function CheckoutPage() {
@@ -42,7 +42,6 @@ export default function CheckoutPage() {
     }
   }, [isAuthenticated, user, navigate, location]);
 
-  // Check if essential booking data is present
   if (!selectedSeats || selectedSeats.length === 0 || !movieDetails || !movieDetails.id || !roomInfo || !roomInfo.id || !showDate || totalPrice === undefined) {
     console.error("CheckoutPage: Essential booking data missing from location.state. Rendering warning.", { selectedSeats, movieDetails, roomInfo, showDate, totalPrice });
     return (
@@ -76,14 +75,13 @@ export default function CheckoutPage() {
     setIsProcessingPayment(true);
     setPaymentError(null);
 
-    // Construct the payload to match backend expectations
     const bookingPayload = {
       userId: user.id,
-      roomId: roomInfo.id,             // From roomInfo passed in state
-      movieId: movieDetails.id,        // From movieDetails passed in state
-      seatDbIds: selectedSeats.map(seat => seat.dbId), // Array of seat database PKs
-      price: totalPrice,               // <<< CHANGED from totalPrice to price
-      showDate: showDate,              // From state
+      roomId: roomInfo.id,
+      movieId: movieDetails.id,
+      seatDbIds: selectedSeats.map(seat => seat.dbId),
+      price: totalPrice,
+      showDate: showDate,
     };
 
     console.log("CheckoutPage: Attempting to create booking with payload:", JSON.stringify(bookingPayload, null, 2));

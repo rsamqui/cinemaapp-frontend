@@ -42,20 +42,19 @@ export default function Footer() {
     <Box
       component="footer"
       sx={{
-        bgcolor: (theme) => theme.palette.mode === 'dark' ? "#0a0a0a" : theme.palette.grey[200], // Adjust for light/dark theme
+        bgcolor: (theme) => theme.palette.mode === 'dark' ? "#0a0a0a" : theme.palette.grey[200],
         color: "text.secondary",
         py: 6,
         borderTop: (theme) => `1px solid ${theme.palette.divider}`,
       }}
     >
-      <Container maxWidth={false} > {/* Keeps your full-width setting */}
+      <Container maxWidth={false} >
         <Grid container spacing={4} justifyContent="space-between">
-          {/* Column 1: Brand and Social */}
           <Grid item xs={12} md={4}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <MovieIcon sx={{ color: "primary.main", fontSize: 40, mr: 1 }} />
               <Typography variant="h5" component="div" sx={{ fontWeight: 700, color: "text.primary" }}>
-                CinePlex {/* Changed from Cineplex to match other components */}
+                CinePlex 
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ mb: 2 }}>
@@ -75,7 +74,6 @@ export default function Footer() {
             </Box>
           </Grid>
 
-          {/* Column 3: Information */}
           <Grid item xs={6} sm={3} md={2}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: "text.primary" }}>
               Information
@@ -111,7 +109,7 @@ export default function Footer() {
             </Typography>
           </Grid>
         </Grid>
-        <Divider sx={{ my: 4, borderColor: "rgba(255,255,255,0.12)" }} /> {/* Adjusted divider color for dark bg */}
+        <Divider sx={{ my: 4, borderColor: "rgba(255,255,255,0.12)" }} />
         <Typography variant="body2" align="center" sx={{ pt: 2, opacity: 0.7 }}>
           &copy; {new Date().getFullYear()} CinePlex. All rights reserved.
         </Typography>

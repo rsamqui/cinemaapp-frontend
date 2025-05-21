@@ -18,8 +18,6 @@ import {
   Description as DescriptionIcon,
   Timer as TimerIcon,
   Link as LinkIcon,
-  Category as CategoryIcon,
-  StarRate as StarRateIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import movieService from "../../services/movieService";
@@ -52,14 +50,14 @@ export default function EditMoviePage() {
       setIsLoading(true);
       setPageError(null);
       try {
-        const responseArray = await movieService.getMovieById(movieId); // Renamed to responseArray for clarity
+        const responseArray = await movieService.getMovieById(movieId);
         console.log(
           "EditMoviePage - Fetched API responseArray:",
           JSON.stringify(responseArray, null, 2)
         );
 
         if (Array.isArray(responseArray) && responseArray.length > 0) {
-          const movieObject = responseArray[0]; // <<< FIX: Access the first element
+          const movieObject = responseArray[0];
           console.log(
             "EditMoviePage - Extracted movieObject:",
             JSON.stringify(movieObject)
@@ -200,7 +198,6 @@ export default function EditMoviePage() {
             Edit Movie {originalMovieData && `"${originalMovieData.title}"`}{" "}
             (ID: {movieId})
           </Typography>
-          {/* Adjust back link as needed, e.g., to /admin/list-movies */}
           <Button
             component={RouterLink}
             to="/movies"
@@ -212,7 +209,6 @@ export default function EditMoviePage() {
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <Grid container spacing={3}>
-            {/* Form fields using title, synopsis, duration, posterUrl, genre, rating states */}
             <Grid item xs={12}>
               <TextField
                 fullWidth

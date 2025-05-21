@@ -25,7 +25,7 @@ const updateUserProfile = async (profileData) => {
 
 const getAllUsers = async () => {
   try {
-    const response = await apiClient.get('/users'); // Example endpoint
+    const response = await apiClient.get('/users');
     return response.data || [];
   } catch (error) {
     console.error("Error fetching all users:", error.response?.data || error.message);
@@ -35,7 +35,7 @@ const getAllUsers = async () => {
 
 const updateUserByAdmin = async (userId, userData) => {
   try {
-    const response = await apiClient.put(`/users/edit/${userId}`, userData); // Example endpoint
+    const response = await apiClient.put(`/users/edit/${userId}`, userData);
     return response.data;
   } catch (error) {
     console.error(`Error updating user ${userId}:`, error.response?.data || error.message);
@@ -47,7 +47,7 @@ const updateUserByAdmin = async (userId, userData) => {
 
 const deleteUserByAdmin = async (userId) => {
   try {
-    const response = await apiClient.delete(`/users/${userId}`); // Example endpoint
+    const response = await apiClient.delete(`/users/${userId}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting user ${userId}:`, error.response?.data || error.message);
